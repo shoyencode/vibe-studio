@@ -1,6 +1,6 @@
 {
   "name": "vibe-studio",
-  "version": "2.1.1",
+  "version": "3.0.0",
   "private": true,
   "description": "Vibe Studio: drives AI kits (skills, agents, contract) on top of Copilot, Claude, Codex or Gemini.",
   "type": "module",

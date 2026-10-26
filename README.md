@@ -159,6 +159,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks and commit, changelog a
 
 ## Compatibility
 
-Vibe Studio is an independent application with its own releases and contract schema. The current application version is **2.1.1**, with clearer cost-attribution failure diagnostics, session pause/resume, Windows sign-in shortcuts, persistent conversation history controls and new notification sounds. The original MIT copyright is preserved in [LICENSE](LICENSE).
+Vibe Studio is an independent application with its own releases and contract schema. The current application version is **3.0.0**, with manual correction management, model reasoning controls and verified Windows updates. Current protocol-2 kits with T/R task identifiers are required; see [the migration instructions](CHANGELOG.md#migration-from-21). The original MIT copyright is preserved in [LICENSE](LICENSE).
 
 The supported public contract is `vibe-studio.json`, protocol 2. Kits use `vibe_studio_report`, the `vibe_studio` MCP namespace and `vibe_studio.*` events. Desktop communications use `vibe-studio:*`, `window.vibeStudio` and `vibe-studio://`. Other contract filenames, protocol versions and renamed runtime identifiers are not adapted. Update kits with APM before opening them. Client files and user message text are never renamed or rewritten automatically. See [docs/vibe-studio-contract.md](docs/vibe-studio-contract.md) and [test/fixtures/README.md](test/fixtures/README.md).

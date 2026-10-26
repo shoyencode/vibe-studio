@@ -2,7 +2,7 @@
 
 Versions follow Semantic Versioning. Application versions are independent of kit release numbers.
 
-## Unreleased
+## 3.0.0
 
 ### Added
 
@@ -12,11 +12,12 @@ Versions follow Semantic Versioning. Application versions are independent of kit
 
 ### Changed
 
-1. `app`: scenario titles include their number throughout navigation, the journey and history. Costs show readable step and scenario titles in separate columns.
-2. `app`: project language is selected from French and English rather than entered as a code. Conversation and journey credit counters display rounded integers while detailed cost reports retain decimals.
-3. `app`: a separator distinguishes the Conversation page heading from its controls and messages in both themes.
-4. `ci`: GitHub Actions is the sole repository CI, with Linux/Windows regressions, individually checked Windows packaging steps and versioned installer/portable artifacts ready for release upload. Version tags must match the package and lockfile.
-5. `contributing`: interrupted test workspaces, temporary profiles and npm debug logs stay untracked; Windows packaging also excludes leftover test profiles. Test sources and fictional fixtures remain versioned, and retained diagnostics belong under the ignored distribution folder.
+1. `app`: Vibe Studio 3.0.0 adds manual correction management, model reasoning controls and verified Windows updates, and requires current protocol-2 kits with T/R task identifiers.
+2. `app`: scenario titles include their number throughout navigation, the journey and history. Costs show readable step and scenario titles in separate columns.
+3. `app`: project language is selected from French and English rather than entered as a code. Conversation and journey credit counters display rounded integers while detailed cost reports retain decimals.
+4. `app`: a separator distinguishes the Conversation page heading from its controls and messages in both themes.
+5. `ci`: GitHub Actions is the sole repository CI, with Linux/Windows regressions, individually checked Windows packaging steps and versioned installer/portable artifacts ready for release upload. Version tags must match the package and lockfile.
+6. `contributing`: interrupted test workspaces, temporary profiles and npm debug logs stay untracked; Windows packaging also excludes leftover test profiles. Test sources and fictional fixtures remain versioned, and retained diagnostics belong under the ignored distribution folder.
 
 ### Changed (breaking)
 
