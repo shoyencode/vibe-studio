@@ -1,0 +1,67 @@
+Vibe Studio - additional third-party notices
+==========================================
+
+These notices supplement the licence files distributed with the dependencies.
+The Windows installer also includes Python and its dependency licences under
+runtime\python. Electron's notices are in LICENSE and LICENSES.chromium.html
+beside the executable. Vibe Studio's own licence is resources\app\LICENSE.
+Claude Agent SDK retains its own legal notice; Claude Code is not bundled.
+
+Recorded acoustic piano and guitar notifications
+-----------------------------------------------
+
+The six WAV files under app/renderer/sounds are derived from instrument samples
+distributed by Nicholaus P. Brosowsky in tonejs-instruments:
+https://github.com/nbrosowsky/tonejs-instruments
+
+Samples: Creative Commons Attribution 3.0 Unported (CC BY 3.0).
+https://creativecommons.org/licenses/by/3.0/
+The complete licence is included in app/renderer/sounds/CC-BY-3.0.txt.
+These recordings are not relicensed under Vibe Studio's MIT source-code licence.
+
+The supplier's sample-source-info.txt identifies the original piano source as
+VSCO 2 (Versilian Studios) and the acoustic guitar source as the University of
+Iowa Electronic Music Studios. The supplier edited the recordings for silence,
+ramps, level consistency, noise and pitch, as documented in its README.
+
+Vibe Studio changes: original question/success/error note sequences, shortened
+tails with fades, stereo 44100 Hz PCM16 WAV rendering and peak normalization.
+No pitch shifting, instrument-synthesis replacement, commercial song or game
+recording is used. Attribution is provided here without implying endorsement.
+Source hashes, note sequences, processing and output hashes are retained in
+app/renderer/sounds/recorded-manifest.json. Only the rendered notification clips,
+not the upstream JavaScript library or its full sample collection, are bundled.
+
+GitHub Copilot SDK and its platform runtime packages
+https://github.com/github/copilot-sdk
+
+MIT License
+
+Copyright GitHub, Inc.
+
+GitHub CLI (included in the Windows installer)
+https://github.com/cli/cli
+
+MIT License
+
+Copyright (c) 2019 GitHub Inc.
+
+The following permission and warranty notice applies to both copyrights above:
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

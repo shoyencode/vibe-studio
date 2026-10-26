@@ -1,0 +1,1030 @@
+{
+  "protocolVersion": 2,
+  "kit": {
+    "id": "reference-kit",
+    "name": "Pre-sales POC",
+    "entrySkill": "poc-0-start",
+    "description": "Build a pre-sales proof of concept from the client documents to a reviewed demonstration.",
+    "about": "The kit guides a pre-sales proof of concept with GitHub Copilot, from the documents of the client to a reviewed demonstration.\n\nEach step is a skill run by a specialised agent: import of the client documents, specification, questions to the client, then for each scenario a plan, the build and an independent review, and a compliance check before the code is shown.\n\nDeliverables are versioned Markdown files, approved by the user at each checkpoint. The code follows the stack declared in `poc.yml`, and each scenario is checked by end-to-end Playwright tests. The AI credits used are measured per step and per scenario.",
+    "i18n": {
+      "fr": {
+        "name": "POC avant-vente",
+        "description": "Construire un POC d’avant-vente, des documents du client à une démonstration revue.",
+        "about": "Le kit accompagne la réalisation d’un POC d’avant-vente avec GitHub Copilot, des documents du client jusqu’à une démonstration revue.\n\nChaque étape est une skill confiée à un agent spécialisé : import des documents du client, cahier des charges, questions au client, puis pour chaque scénario un plan, la construction et une revue indépendante, et enfin un contrôle de conformité avant de montrer le code.\n\nLes livrables sont des fichiers Markdown versionnés, validés par l’utilisateur à chaque point de contrôle. Le code suit la pile déclarée dans `poc.yml`, et chaque scénario est vérifié par des tests de bout en bout Playwright. Les crédits IA consommés sont mesurés par étape et par scénario."
+      }
+    }
+  },
+  "config": {
+    "file": "poc.yml",
+    "schema": "assets/poc.schema.json",
+    "template": "assets/poc-template.yml",
+    "language": "/project/language",
+    "title": "/project/name",
+    "paths": "/paths",
+    "placeholders": {
+      "root": {
+        "pointer": "/paths/root",
+        "default": "poc"
+      },
+      "sources": {
+        "pointer": "/paths/sources",
+        "default": "poc/sources"
+      },
+      "specification": {
+        "pointer": "/paths/specification",
+        "default": "poc/specification.md"
+      },
+      "code": {
+        "pointer": "/paths/code",
+        "default": "app"
+      }
+    }
+  },
+  "units": {
+    "id": "scenario",
+    "label": "Scenario",
+    "plural": "Scenarios",
+    "folder": "{root}/build/scenario-{n}",
+    "evidence": "{unit}/evidence",
+    "i18n": {
+      "fr": {
+        "label": "Scénario",
+        "plural": "Scénarios"
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "0-start",
+      "title": "Configure the POC",
+      "skill": "poc-0-start",
+      "agent": null,
+      "scope": "project",
+      "configures": true,
+      "requires": [],
+      "outputs": [
+        "poc.yml",
+        "{root}/state.md"
+      ],
+      "summary": "Creates or checks the POC configuration, asks the framing questions (demonstration, audience, priority scenarios, visual identity) and proposes the packages to install.",
+      "returns": "A validated poc.yml, state.md with the framing, installations after approval, and the next step.",
+      "i18n": {
+        "fr": {
+          "title": "Configurer le POC",
+          "summary": "Crée ou vérifie la configuration du POC, pose les questions de cadrage (démonstration, public, scénarios prioritaires, identité visuelle) et propose les paquets à installer.",
+          "returns": "poc.yml validé, state.md avec le cadrage, installations après accord, et l’étape suivante."
+        }
+      },
+      "guards": {
+        "readOnly": [
+          {
+            "id": "G10",
+            "paths": [
+              "{code}/**"
+            ],
+            "reason": "Vibe Studio guard G10: this step writes no application code. The code is written by the build step.",
+            "description": "No application code in this step.",
+            "i18n": {
+              "fr": {
+                "description": "Pas de code applicatif dans cette étape."
+              }
+            }
+          }
+        ],
+        "skills": {
+          "id": "G15",
+          "reason": "Vibe Studio guard G15: run only the skill of this step. Name the next step to the user instead of starting it.",
+          "description": "Only the skill of this step runs.",
+          "i18n": {
+            "fr": {
+              "description": "Seul le skill de cette étape s’exécute."
+            }
+          }
+        },
+        "end": [
+          {
+            "id": "E1",
+            "check": "reported",
+            "reason": "Before ending, call vibe_studio_report with status produced (and the paths written) or error.",
+            "description": "Final report sent.",
+            "i18n": {
+              "fr": {
+                "description": "Rapport final envoyé."
+              }
+            }
+          },
+          {
+            "id": "E3",
+            "check": "modified",
+            "path": "{root}/state/journal.md",
+            "reason": "Before ending, record this step in state/journal.md and the Progress row of state.md, as the rule on working files says.",
+            "description": "Journal updated.",
+            "i18n": {
+              "fr": {
+                "description": "Journal mis à jour."
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "1-import-documents",
+      "title": "Import the documents",
+      "skill": "poc-1-import-documents",
+      "agent": "poc-analyst",
+      "scope": "project",
+      "requires": [
+        "poc.yml"
+      ],
+      "outputs": [
+        "{root}/inventory.json"
+      ],
+      "approves": [
+        "{root}/inventory.json"
+      ],
+      "summary": "Converts the documents of the sources folder to Markdown, embedded workbooks included, then has the inventory confirmed.",
+      "returns": "Converted documents, inventory.json and the decision taken for each warning.",
+      "i18n": {
+        "fr": {
+          "title": "Importer les documents",
+          "summary": "Convertit en Markdown les documents déposés dans le dossier des sources, classeurs intégrés compris, puis fait confirmer l’inventaire.",
+          "returns": "Documents convertis, inventory.json et la décision prise pour chaque avertissement."
+        }
+      },
+      "guards": {
+        "readOnly": [
+          {
+            "id": "G10",
+            "paths": [
+              "{code}/**"
+            ],
+            "reason": "Vibe Studio guard G10: this step writes no application code. The code is written by the build step.",
+            "description": "No application code in this step.",
+            "i18n": {
+              "fr": {
+                "description": "Pas de code applicatif dans cette étape."
+              }
+            }
+          }
+        ],
+        "skills": {
+          "id": "G15",
+          "reason": "Vibe Studio guard G15: run only the skill of this step. Name the next step to the user instead of starting it.",
+          "description": "Only the skill of this step runs.",
+          "i18n": {
+            "fr": {
+              "description": "Seul le skill de cette étape s’exécute."
+            }
+          }
+        },
+        "end": [
+          {
+            "id": "E1",
+            "check": "reported",
+            "reason": "Before ending, call vibe_studio_report with status produced (and the paths written) or error.",
+            "description": "Final report sent.",
+            "i18n": {
+              "fr": {
+                "description": "Rapport final envoyé."
+              }
+            }
+          },
+          {
+            "id": "E3",
+            "check": "modified",
+            "path": "{root}/state/journal.md",
+            "reason": "Before ending, record this step in state/journal.md and the Progress row of state.md, as the rule on working files says.",
+            "description": "Journal updated.",
+            "i18n": {
+              "fr": {
+                "description": "Journal mis à jour."
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "2-write-specification",
+      "title": "Write the specification",
+      "skill": "poc-2-write-specification",
+      "agent": "poc-analyst",
+      "scope": "project",
+      "requires": [
+        "poc.yml",
+        "{root}/inventory.json"
+      ],
+      "outputs": [
+        "{specification}",
+        "{root}/traceability.md"
+      ],
+      "approves": [
+        "{specification}"
+      ],
+      "summary": "Asks the framing questions, writes or updates the specification from the sources, client answers, reviews and team decisions, then has it approved.",
+      "returns": "Specification, internal traceability, mismatch and dependency tables, optional cold review.",
+      "i18n": {
+        "fr": {
+          "title": "Rédiger la spécification",
+          "summary": "Pose les questions de cadrage, rédige ou met à jour le cahier des charges à partir des sources, des réponses du client, des relectures et des décisions d’équipe, puis le fait valider.",
+          "returns": "Cahier des charges, traçabilité interne, tableaux d’écarts et de dépendances, relecture à froid en option."
+        }
+      },
+      "guards": {
+        "readOnly": [
+          {
+            "id": "G10",
+            "paths": [
+              "{code}/**"
+            ],
+            "reason": "Vibe Studio guard G10: this step writes no application code. The code is written by the build step.",
+            "description": "No application code in this step.",
+            "i18n": {
+              "fr": {
+                "description": "Pas de code applicatif dans cette étape."
+              }
+            }
+          }
+        ],
+        "skills": {
+          "id": "G15",
+          "reason": "Vibe Studio guard G15: run only the skill of this step. Name the next step to the user instead of starting it.",
+          "description": "Only the skill of this step runs.",
+          "i18n": {
+            "fr": {
+              "description": "Seul le skill de cette étape s’exécute."
+            }
+          }
+        },
+        "end": [
+          {
+            "id": "E1",
+            "check": "reported",
+            "reason": "Before ending, call vibe_studio_report with status produced (and the paths written) or error.",
+            "description": "Final report sent.",
+            "i18n": {
+              "fr": {
+                "description": "Rapport final envoyé."
+              }
+            }
+          },
+          {
+            "id": "E3",
+            "check": "modified",
+            "path": "{root}/state/journal.md",
+            "reason": "Before ending, record this step in state/journal.md and the Progress row of state.md, as the rule on working files says.",
+            "description": "Journal updated.",
+            "i18n": {
+              "fr": {
+                "description": "Journal mis à jour."
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "3-ask-client",
+      "title": "Prepare the questions",
+      "skill": "poc-3-ask-client",
+      "agent": "poc-analyst",
+      "scope": "project",
+      "requires": [
+        "poc.yml",
+        "{specification}"
+      ],
+      "outputs": [
+        "{root}/questions.md"
+      ],
+      "approves": [
+        "{root}/questions.md"
+      ],
+      "summary": "Turns gaps and mismatches into prioritised questions for the client, or records and triages the client's answers.",
+      "returns": "questions.md with a priority, a working hypothesis and a status for each question.",
+      "i18n": {
+        "fr": {
+          "title": "Préparer les questions",
+          "summary": "Transforme les écarts et manques en questions priorisées pour le client, ou enregistre et trie ses réponses.",
+          "returns": "questions.md avec priorité, hypothèse de travail et statut de chaque question."
+        }
+      },
+      "guards": {
+        "readOnly": [
+          {
+            "id": "G10",
+            "paths": [
+              "{code}/**"
+            ],
+            "reason": "Vibe Studio guard G10: this step writes no application code. The code is written by the build step.",
+            "description": "No application code in this step.",
+            "i18n": {
+              "fr": {
+                "description": "Pas de code applicatif dans cette étape."
+              }
+            }
+          }
+        ],
+        "skills": {
+          "id": "G15",
+          "reason": "Vibe Studio guard G15: run only the skill of this step. Name the next step to the user instead of starting it.",
+          "description": "Only the skill of this step runs.",
+          "i18n": {
+            "fr": {
+              "description": "Seul le skill de cette étape s’exécute."
+            }
+          }
+        },
+        "end": [
+          {
+            "id": "E1",
+            "check": "reported",
+            "reason": "Before ending, call vibe_studio_report with status produced (and the paths written) or error.",
+            "description": "Final report sent.",
+            "i18n": {
+              "fr": {
+                "description": "Rapport final envoyé."
+              }
+            }
+          },
+          {
+            "id": "E3",
+            "check": "modified",
+            "path": "{root}/state/journal.md",
+            "reason": "Before ending, record this step in state/journal.md and the Progress row of state.md, as the rule on working files says.",
+            "description": "Journal updated.",
+            "i18n": {
+              "fr": {
+                "description": "Journal mis à jour."
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "4-plan-scenario",
+      "title": "Plan a scenario",
+      "skill": "poc-4-plan-scenario",
+      "agent": "poc-architect",
+      "scope": "unit",
+      "requires": [
+        "poc.yml",
+        "{specification}",
+        "{root}/state.md"
+      ],
+      "outputs": [
+        "{unit}/spec.md",
+        "{unit}/plan.md",
+        "{unit}/tasks.md"
+      ],
+      "approves": [
+        "{root}/build/constitution.md",
+        "{unit}/spec.md",
+        "{unit}/plan.md"
+      ],
+      "summary": "Asks the design questions, writes the constitution for the first scenario, then the contract, plan, demo walkthrough and tasks of the scenario.",
+      "returns": "spec.md, plan.md and tasks.md of the scenario, approved by the user. No code.",
+      "i18n": {
+        "fr": {
+          "title": "Planifier un scénario",
+          "summary": "Pose les questions de conception, écrit la constitution au premier scénario, puis le contrat, le plan, le parcours de démonstration et les tâches du scénario.",
+          "returns": "spec.md, plan.md et tasks.md du scénario, approuvés par l’utilisateur. Aucun code."
+        }
+      },
+      "guards": {
+        "readOnly": [
+          {
+            "id": "G10",
+            "paths": [
+              "{code}/**"
+            ],
+            "reason": "Vibe Studio guard G10: this step writes no application code. The code is written by the build step.",
+            "description": "No application code in this step.",
+            "i18n": {
+              "fr": {
+                "description": "Pas de code applicatif dans cette étape."
+              }
+            }
+          }
+        ],
+        "skills": {
+          "id": "G15",
+          "reason": "Vibe Studio guard G15: run only the skill of this step. Name the next step to the user instead of starting it.",
+          "description": "Only the skill of this step runs.",
+          "i18n": {
+            "fr": {
+              "description": "Seul le skill de cette étape s’exécute."
+            }
+          }
+        },
+        "end": [
+          {
+            "id": "E1",
+            "check": "reported",
+            "reason": "Before ending, call vibe_studio_report with status produced (and the paths written) or error.",
+            "description": "Final report sent.",
+            "i18n": {
+              "fr": {
+                "description": "Rapport final envoyé."
+              }
+            }
+          },
+          {
+            "id": "E3",
+            "check": "modified",
+            "path": "{root}/state/journal.md",
+            "reason": "Before ending, record this step in state/journal.md and the Progress row of state.md, as the rule on working files says.",
+            "description": "Journal updated.",
+            "i18n": {
+              "fr": {
+                "description": "Journal mis à jour."
+              }
+            }
+          },
+          {
+            "id": "E5",
+            "check": "planStatus",
+            "path": "{unit}/tasks.md",
+            "reason": "Before ending, write the Plan status line at the top of tasks.md (pending or approved on <date> by <who>).",
+            "description": "Plan status written.",
+            "i18n": {
+              "fr": {
+                "description": "Statut du plan écrit."
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "5-build-scenario",
+      "title": "Build a scenario",
+      "skill": "poc-5-build-scenario",
+      "agent": "poc-developer",
+      "scope": "unit",
+      "requires": [
+        "poc.yml",
+        "{unit}/plan.md",
+        "{unit}/tasks.md"
+      ],
+      "outputs": [
+        "{unit}/tasks.md"
+      ],
+      "contextTier": "long_context",
+      "summary": "Codes the approved tasks one by one, with review points and screenshots, then writes one Playwright end-to-end test per acceptance criterion. No unit tests.",
+      "returns": "Code of the scenario, status of each task in tasks.md, end-to-end tests and demo screenshots in evidence/.",
+      "variants": {
+        "corrections": {
+          "title": "Apply the review corrections",
+          "summary": "Codes the open correction tasks R of tasks.md one by one: review findings and your feedback. A feedback is clarified with you before it is coded. Then replays the end-to-end tests.",
+          "returns": "Corrected code, correction tasks marked done in tasks.md, screenshots regenerated. A new review round is suggested.",
+          "i18n": {
+            "fr": {
+              "title": "Appliquer les corrections de la revue",
+              "summary": "Code une par une les tâches de correction R ouvertes de tasks.md : constats de la revue et tes retours. Un retour est clarifié avec toi avant d’être codé. Puis rejoue les tests de bout en bout.",
+              "returns": "Code corrigé, tâches de correction terminées dans tasks.md, captures régénérées. Un nouveau tour de revue est proposé."
+            }
+          }
+        }
+      },
+      "i18n": {
+        "fr": {
+          "title": "Construire un scénario",
+          "summary": "Code les tâches approuvées une par une, avec points d’étape et captures d’écran, puis écrit un test Playwright de bout en bout par critère de validation. Aucun test unitaire.",
+          "returns": "Code du scénario, statut de chaque tâche dans tasks.md, tests de bout en bout et captures de démonstration dans evidence/."
+        }
+      },
+      "guards": {
+        "readOnly": [
+          {
+            "id": "G11",
+            "paths": [
+              "{specification}",
+              "{unit}/spec.md",
+              "{unit}/plan.md",
+              "{root}/build/constitution.md"
+            ],
+            "reason": "Vibe Studio guard G11: the specification, the contract, the plan and the constitution are read-only during the build. Record the gap in state.md and ask the user.",
+            "description": "Specification, plan and constitution are read-only.",
+            "i18n": {
+              "fr": {
+                "description": "Spécification, plan et constitution en lecture seule."
+              }
+            }
+          }
+        ],
+        "requireTaskInProgress": {
+          "id": "G12",
+          "paths": [
+            "{code}/**"
+          ],
+          "reason": "Vibe Studio guard G12: no task is in progress. Call vibe_studio_report with task {id, status: in_progress} for the task you start, then write its code.",
+          "description": "Code is written only for a task in progress.",
+          "i18n": {
+            "fr": {
+              "description": "Le code ne s’écrit que pour une tâche en cours."
+            }
+          }
+        },
+        "singleTaskInProgress": {
+          "id": "G13",
+          "reason": "Vibe Studio guard G13: another task is still in progress. Mark it done or blocked first; one task at a time.",
+          "description": "One task in progress at a time.",
+          "i18n": {
+            "fr": {
+              "description": "Une seule tâche en cours à la fois."
+            }
+          }
+        },
+        "forbidCreate": {
+          "id": "G14",
+          "paths": [
+            "{code}/**/*.spec.ts",
+            "{code}/**/*.test.ts",
+            "{code}/**/src/test/**"
+          ],
+          "except": [
+            "{code}/e2e/**"
+          ],
+          "reason": "Vibe Studio guard G14: no unit or integration test in a POC. The only tests are the Playwright end-to-end tests of the e2e folder.",
+          "description": "No unit or integration test file.",
+          "i18n": {
+            "fr": {
+              "description": "Pas de fichier de test unitaire ou d’intégration."
+            }
+          }
+        },
+        "skills": {
+          "id": "G15",
+          "reason": "Vibe Studio guard G15: run only the skill of this step. Name the next step to the user instead of starting it.",
+          "description": "Only the skill of this step runs.",
+          "i18n": {
+            "fr": {
+              "description": "Seul le skill de cette étape s’exécute."
+            }
+          }
+        },
+        "end": [
+          {
+            "id": "E1",
+            "check": "reported",
+            "reason": "Before ending, call vibe_studio_report with status produced (and the paths written) or error.",
+            "description": "Final report sent.",
+            "i18n": {
+              "fr": {
+                "description": "Rapport final envoyé."
+              }
+            }
+          },
+          {
+            "id": "E3",
+            "check": "modified",
+            "path": "{root}/state/journal.md",
+            "reason": "Before ending, record this step in state/journal.md and the Progress row of state.md, as the rule on working files says.",
+            "description": "Journal updated.",
+            "i18n": {
+              "fr": {
+                "description": "Journal mis à jour."
+              }
+            }
+          },
+          {
+            "id": "E2",
+            "check": "noTaskInProgress",
+            "path": "{unit}/tasks.md",
+            "reason": "Before ending, no task may stay in progress: mark it done or blocked with vibe_studio_report.",
+            "description": "No task left in progress.",
+            "i18n": {
+              "fr": {
+                "description": "Aucune tâche laissée en cours."
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "6-review-scenario",
+      "title": "Review a scenario",
+      "skill": "poc-6-review-scenario",
+      "agent": null,
+      "scope": "unit",
+      "requires": [
+        "poc.yml",
+        "{unit}/tasks.md"
+      ],
+      "outputs": [
+        "{unit}/review.md"
+      ],
+      "approves": [
+        "{unit}/review.md"
+      ],
+      "summary": "Has the scenario reviewed by three independent reviewers, collects your feedback, has each finding decided and offers to apply the fixes.",
+      "returns": "review.md with findings and decisions, fixes added to the tasks.",
+      "variants": {
+        "rereview": {
+          "title": "Review again",
+          "summary": "New review round: the three reviewers check each correction done since the last round and look for new findings only in what changed. The end-to-end tests are replayed in full to catch regressions.",
+          "returns": "review.md of the new round (the previous one archived as review-<k>.md), each correction checked, new findings decided. Ready for the demonstration when nothing is left to fix.",
+          "i18n": {
+            "fr": {
+              "title": "Refaire la revue",
+              "summary": "Nouveau tour de revue : les trois relecteurs vérifient chaque correction faite depuis le tour précédent et ne cherchent de nouveaux constats que dans ce qui a changé. Les tests de bout en bout sont rejoués en entier pour repérer les régressions.",
+              "returns": "review.md du nouveau tour (le précédent archivé en review-<k>.md), chaque correction vérifiée, nouveaux constats tranchés. Prêt pour la démonstration quand plus rien n’est à corriger."
+            }
+          }
+        }
+      },
+      "i18n": {
+        "fr": {
+          "title": "Revoir un scénario",
+          "summary": "Fait relire le scénario par trois relecteurs indépendants, recueille tes retours, fait trancher chaque constat et propose d’appliquer les corrections.",
+          "returns": "review.md avec les constats et décisions, corrections ajoutées aux tâches."
+        }
+      },
+      "guards": {
+        "readOnly": [
+          {
+            "id": "G10",
+            "paths": [
+              "{code}/**"
+            ],
+            "reason": "Vibe Studio guard G10: this step writes no application code. The code is written by the build step.",
+            "description": "No application code in this step.",
+            "i18n": {
+              "fr": {
+                "description": "Pas de code applicatif dans cette étape."
+              }
+            }
+          }
+        ],
+        "skills": {
+          "id": "G15",
+          "skills": [
+            "poc-7-check-compliance"
+          ],
+          "reason": "Vibe Studio guard G15: run only the skill of this step. Name the next step to the user instead of starting it.",
+          "description": "Only the skill of this step runs.",
+          "i18n": {
+            "fr": {
+              "description": "Seul le skill de cette étape s’exécute."
+            }
+          }
+        },
+        "subagentsReadOnly": {
+          "id": "G16",
+          "reason": "Vibe Studio guard G16: reviewers read only. Report findings; the review step writes review.md.",
+          "description": "Reviewers only read.",
+          "i18n": {
+            "fr": {
+              "description": "Les relecteurs ne font que lire."
+            }
+          }
+        },
+        "end": [
+          {
+            "id": "E1",
+            "check": "reported",
+            "reason": "Before ending, call vibe_studio_report with status produced (and the paths written) or error.",
+            "description": "Final report sent.",
+            "i18n": {
+              "fr": {
+                "description": "Rapport final envoyé."
+              }
+            }
+          },
+          {
+            "id": "E3",
+            "check": "modified",
+            "path": "{root}/state/journal.md",
+            "reason": "Before ending, record this step in state/journal.md and the Progress row of state.md, as the rule on working files says.",
+            "description": "Journal updated.",
+            "i18n": {
+              "fr": {
+                "description": "Journal mis à jour."
+              }
+            }
+          },
+          {
+            "id": "E4",
+            "check": "reviewDecided",
+            "path": "{unit}/review.md",
+            "reason": "Before ending, review.md must start with Review round: and every finding must have a decision of the user.",
+            "description": "Every finding decided.",
+            "i18n": {
+              "fr": {
+                "description": "Chaque constat tranché."
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "7-check-compliance",
+      "title": "Prepare the compliance evidence",
+      "skill": "poc-7-check-compliance",
+      "agent": null,
+      "scope": "project",
+      "requires": [
+        "poc.yml",
+        "{root}/build/constitution.md"
+      ],
+      "outputs": [
+        "{root}/compliance/licenses.json",
+        "{root}/compliance/licenses.md",
+        "{root}/compliance/ai-disclosure.md"
+      ],
+      "approves": [
+        "{root}/compliance/licenses.md",
+        "{root}/compliance/ai-disclosure.md"
+      ],
+      "requiresBuiltUnit": true,
+      "summary": "Lists the third-party components of the built code, checks their licenses and drafts the declaration of AI use. To do before the code is shown outside the team.",
+      "returns": "SBOM, license report, third-party notices and declaration of AI use, to be validated by the legal team.",
+      "i18n": {
+        "fr": {
+          "title": "Préparer les preuves de conformité",
+          "summary": "Inventorie les composants tiers du code construit, contrôle leurs licences et rédige la déclaration d’usage de l’IA. À faire avant de montrer le code hors de l’équipe.",
+          "returns": "SBOM, rapport de licences, mentions des tiers et déclaration d’usage de l’IA, à faire valider par le juridique."
+        }
+      },
+      "guards": {
+        "readOnly": [
+          {
+            "id": "G10",
+            "paths": [
+              "{code}/**"
+            ],
+            "reason": "Vibe Studio guard G10: this step writes no application code. The code is written by the build step.",
+            "description": "No application code in this step.",
+            "i18n": {
+              "fr": {
+                "description": "Pas de code applicatif dans cette étape."
+              }
+            },
+            "except": [
+              "{code}/THIRD_PARTY*",
+              "{code}/**/THIRD_PARTY*"
+            ]
+          }
+        ],
+        "skills": {
+          "id": "G15",
+          "reason": "Vibe Studio guard G15: run only the skill of this step. Name the next step to the user instead of starting it.",
+          "description": "Only the skill of this step runs.",
+          "i18n": {
+            "fr": {
+              "description": "Seul le skill de cette étape s’exécute."
+            }
+          }
+        },
+        "end": [
+          {
+            "id": "E1",
+            "check": "reported",
+            "reason": "Before ending, call vibe_studio_report with status produced (and the paths written) or error.",
+            "description": "Final report sent.",
+            "i18n": {
+              "fr": {
+                "description": "Rapport final envoyé."
+              }
+            }
+          },
+          {
+            "id": "E3",
+            "check": "modified",
+            "path": "{root}/state/journal.md",
+            "reason": "Before ending, record this step in state/journal.md and the Progress row of state.md, as the rule on working files says.",
+            "description": "Journal updated.",
+            "i18n": {
+              "fr": {
+                "description": "Journal mis à jour."
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "deliverables": {
+    "groups": [
+      {
+        "id": "framing",
+        "title": "Framing",
+        "patterns": [
+          "poc.yml",
+          "{root}/state.md"
+        ],
+        "i18n": {
+          "fr": {
+            "title": "Cadrage"
+          }
+        }
+      },
+      {
+        "id": "sources",
+        "title": "Client sources",
+        "patterns": [
+          "{root}/inventory.json"
+        ],
+        "i18n": {
+          "fr": {
+            "title": "Sources client"
+          }
+        }
+      },
+      {
+        "id": "specification",
+        "title": "Specification",
+        "patterns": [
+          "{specification}",
+          "{root}/traceability.md",
+          "{root}/questions.md"
+        ],
+        "i18n": {
+          "fr": {
+            "title": "Spécification"
+          }
+        }
+      },
+      {
+        "id": "build",
+        "title": "Build",
+        "patterns": [
+          "{root}/build/**"
+        ],
+        "i18n": {
+          "fr": {
+            "title": "Construction"
+          }
+        }
+      },
+      {
+        "id": "compliance",
+        "title": "Compliance",
+        "patterns": [
+          "{root}/compliance/**"
+        ],
+        "i18n": {
+          "fr": {
+            "title": "Conformité"
+          }
+        }
+      },
+      {
+        "id": "costs",
+        "title": "Costs",
+        "patterns": [
+          "{root}/costs.md"
+        ],
+        "i18n": {
+          "fr": {
+            "title": "Coûts"
+          }
+        }
+      }
+    ],
+    "extra": [
+      "{root}/state.md",
+      "{root}/questions.md",
+      "{root}/costs.md",
+      "{root}/build/constitution.md"
+    ]
+  },
+  "modules": {
+    "tasks": {
+      "file": "{unit}/tasks.md",
+      "buildStep": "5-build-scenario",
+      "requirements": "{unit}/spec.md"
+    },
+    "review": {
+      "file": "{unit}/review.md",
+      "buildStep": "5-build-scenario",
+      "reviewStep": "6-review-scenario",
+      "feedback": true
+    },
+    "sources": {
+      "folder": "{sources}",
+      "inventory": "{root}/inventory.json",
+      "importStep": "1-import-documents"
+    },
+    "costs": {
+      "script": "poc-track-costs/scripts/track_costs.py",
+      "report": "{root}/costs.md",
+      "budget": "/costs/budget_credits",
+      "creditsPerAiu": "/costs/credits_per_aiu"
+    },
+    "approvals": {
+      "script": "poc-0-start/scripts/validations.py",
+      "file": "{root}/state/validations.md"
+    },
+    "application": {
+      "pointer": "/run"
+    }
+  },
+  "guards": {
+    "readOnly": [
+      {
+        "id": "G01",
+        "paths": [
+          "{sources}/**"
+        ],
+        "reason": "Vibe Studio guard G01: the client documents are read-only. Work from their converted copies.",
+        "description": "Client documents are read-only.",
+        "i18n": {
+          "fr": {
+            "description": "Les documents du client sont en lecture seule."
+          }
+        }
+      }
+    ],
+    "scriptOnly": [
+      {
+        "id": "G02",
+        "paths": [
+          "{root}/state/validations.md"
+        ],
+        "scripts": [
+          "validations.py"
+        ],
+        "reason": "Vibe Studio guard G02: deliverable approvals are written only by validations.py of poc-0-start, after the user approved. Use its record command.",
+        "description": "Approvals are written only by the approval script.",
+        "i18n": {
+          "fr": {
+            "description": "Les validations ne sont écrites que par le script de validation."
+          }
+        }
+      },
+      {
+        "id": "G03",
+        "paths": [
+          "{root}/costs/marks.jsonl",
+          "{root}/costs/sessions/**"
+        ],
+        "scripts": [
+          "track_costs.py"
+        ],
+        "reason": "Vibe Studio guard G03: cost files are written only by track_costs.py of poc-track-costs.",
+        "description": "Cost files are written only by the cost script.",
+        "i18n": {
+          "fr": {
+            "description": "Les fichiers de coûts ne sont écrits que par le script de coûts."
+          }
+        }
+      }
+    ],
+    "secrets": {
+      "id": "G04",
+      "reason": "Vibe Studio guard G04: the text contains what looks like a secret (private key, token, access key). Never write secrets in the project; use a placeholder and tell the user.",
+      "description": "No secret written in the project.",
+      "i18n": {
+        "fr": {
+          "description": "Aucun secret écrit dans le projet."
+        }
+      }
+    },
+    "confirmCommands": {
+      "id": "G05",
+      "commands": [
+        "\\bapm\\s+install\\b",
+        "\\bgit\\s+push\\b",
+        "\\bnpm\\s+publish\\b",
+        "\\bmvnw?(\\.cmd)?\\b.*\\bdeploy\\b"
+      ],
+      "reason": "Vibe Studio guard G05: this command has an effect outside the computer or installs packages; the user confirms it.",
+      "description": "Installing, pushing or publishing is confirmed by you.",
+      "i18n": {
+        "fr": {
+          "description": "Installer, pousser ou publier se confirme par toi."
+        }
+      }
+    },
+    "history": {
+      "id": "G06",
+      "paths": [
+        "{specification}",
+        "{root}/*.md",
+        "{root}/build/**/*.md",
+        "{root}/state/*.md"
+      ],
+      "except": [
+        "{root}/history/**",
+        "{root}/state/journal.md",
+        "{root}/state/decisions.md",
+        "{root}/state/validations.md",
+        "{root}/build/*/tasks.md",
+        "{root}/costs.md"
+      ],
+      "folder": "{root}/history",
+      "reason": "Vibe Studio guard G06: a copy of the file was saved in the history folder before it was rewritten.",
+      "description": "A deliverable rewritten in full is copied to history first.",
+      "i18n": {
+        "fr": {
+          "description": "Un livrable réécrit en entier est d’abord copié dans l’historique."
+        }
+      }
+    }
+  }
+}

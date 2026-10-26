@@ -1,0 +1,14 @@
+node_modules/
+dist/
+__pycache__/
+*.pyc
+.impeccable/
+.venv/
+.env
+.env.*
+!.env.example
+
+# Isolated test workspaces can remain after an interrupted run.
+/.test-*/
+/.profile-test-*/
+/npm-debug.log*

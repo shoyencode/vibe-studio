@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Reference kit project configuration (poc.yml)",
+  "type": "object",
+  "required": ["client", "project", "stack", "paths"],
+  "additionalProperties": false,
+  "properties": {
+    "kit": {
+      "type": "object",
+      "deprecated": true,
+      "description": "Obsolete since kit 0.10.0 and ignored: the installed version is read from apm.lock.yaml.",
+      "additionalProperties": false,
+      "properties": {
+        "version": { "type": "string" }
+      }
+    },
+    "client": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "sector": { "type": "string" }
+      }
+    },
+    "project": {
+      "type": "object",
+      "required": ["name", "language"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "language": { "type": "string", "pattern": "^[a-z]{2}$", "description": "Language of the agent's replies and of every file produced (ISO 639-1), for example en or fr. The kit itself is in English." },
+        "code_host": { "enum": ["github", "azure-devops", "gitlab", "none"], "default": "none" },
+        "code_host_org": { "type": ["string", "null"], "description": "Organization name on the code host, used to configure its MCP server." }
+      }
+    },
+    "stack": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "front": { "type": "string", "description": "Stack package folder under stacks/ (for example angular) or none." },
+        "back": { "type": "string", "description": "Stack package folder under stacks/ (for example java-spring) or none." },
+        "database": { "type": "string", "description": "For example h2 or postgresql." },
+        "e2e": { "enum": ["playwright", "none"], "default": "playwright", "description": "End-to-end test tool: one test per acceptance criterion, playing the demo walkthrough; also used for screen checks. No unit or integration tests are written. none: the walkthrough is played by hand." }
+      }
+    },
+    "needs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Key client needs, one line each."
+    },
+    "paths": {
+      "type": "object",
+      "required": ["root"],
+      "additionalProperties": false,
+      "properties": {
+        "root": { "type": "string", "default": "poc", "description": "Working folder of the kit." },
+        "sources": { "type": "string", "default": "poc/sources" },
+        "specification": { "type": "string", "default": "poc/specification.md" },
+        "code": { "type": "string", "default": "app", "description": "Folder of the POC source code." }
+      }
+    },
+    "costs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "budget_credits": { "type": ["number", "null"], "minimum": 0, "description": "GitHub AI credits budget for the POC (1 credit = 0.01 USD)." },
+        "credits_per_aiu": { "type": "number", "exclusiveMinimum": 0, "default": 1.0, "description": "AI credits per AIU found in Copilot logs. 1 verified against public prices on 2026-10-07." }
+      }
+    },
+    "compliance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "distribution": { "enum": ["demo-only", "delivered"], "default": "demo-only", "description": "demo-only: shown from the team's machines. delivered: source, binaries or a hosted service handed to the client." },
+        "licenses": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "SPDX ids or prefixes ending with * (for example GPL-*) added to the default policy.",
+          "properties": {
+            "allowed": { "type": "array", "items": { "type": "string" } },
+            "review": { "type": "array", "items": { "type": "string" } },
+            "denied": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "exceptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["component", "reason"],
+            "additionalProperties": false,
+            "properties": {
+              "component": { "type": "string", "description": "Package URL without version (pkg:npm/foo) or with version (pkg:npm/foo@1.2.3)." },
+              "reason": { "type": "string", "minLength": 5 }
+            }
+          }
+        },
+        "ai_disclosure": { "type": "boolean", "default": true },
+        "client_requirements": { "type": ["string", "null"], "description": "Contractual compliance requirements of the client, one line." }
+      }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How to start the POC with its tools, used by the Launch button of Vibe Studio. Filled by poc-4-plan-scenario, kept up to date by poc-5-build-scenario.",
+      "properties": {
+        "services": {
+          "type": "array",
+          "maxItems": 10,
+          "description": "Started in this order. Each one waits for the port of the previous one.",
+          "items": {
+            "type": "object",
+            "required": ["name", "cwd", "command"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string", "minLength": 1, "maxLength": 40 },
+              "cwd": { "type": "string", "minLength": 1, "description": "Folder relative to the project root." },
+              "command": { "type": "string", "minLength": 1, "maxLength": 300, "description": "Command run in the system shell after the user confirms it." },
+              "port": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "Port that answers when the service is ready." },
+              "url": { "type": "string", "pattern": "^https?://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?(/.*)?$", "description": "Local address to open, if the service has a screen." }
+            }
+          }
+        },
+        "open": { "type": ["string", "null"], "pattern": "^https?://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?(/.*)?$", "description": "Address opened once every service is ready." }
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+# kit-demo project configuration. Schema: assets/demo.schema.json of the demo-0-start skill.
+project:
+  name: <project name>
+  language: en # output language, ISO code
+paths:
+  root: work

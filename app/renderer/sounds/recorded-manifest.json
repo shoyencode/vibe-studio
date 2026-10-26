@@ -1,0 +1,187 @@
+{
+  "source": {
+    "source": "https://github.com/nbrosowsky/tonejs-instruments",
+    "license": "CC-BY-3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+    "attribution": "Nicholaus P. Brosowsky; piano source: VSCO 2; acoustic guitar source: University of Iowa, as documented in sample-source-info.txt",
+    "files": [
+      {
+        "path": "piano/G4.mp3",
+        "size": 112086,
+        "sha256": "88dbfa25dc4f225f7b5c430855e68daaea9661380725837ddfe06eaf132c1e56"
+      },
+      {
+        "path": "piano/C5.mp3",
+        "size": 177190,
+        "sha256": "54a9304d2c609328580c0e06a394670559fe5f594f643d5d12c6dae158051b4a"
+      },
+      {
+        "path": "piano/D5.mp3",
+        "size": 153402,
+        "sha256": "f5ff366d560563e2ec296dbc48feb5f011b99967a0014836ad479185b7456c2c"
+      },
+      {
+        "path": "piano/E5.mp3",
+        "size": 128988,
+        "sha256": "54886fbf11c8f767a361200f70c5ea06c21b70dfc2c37f16d238b07be16d489a"
+      },
+      {
+        "path": "piano/G5.mp3",
+        "size": 116468,
+        "sha256": "05f848a51be9302ac8195c4875c432cc95fccb09d3d38aab6103ddf88720d835"
+      },
+      {
+        "path": "piano/C6.mp3",
+        "size": 100192,
+        "sha256": "c3c9ee316e7b98a07d89be2340c2382aa689826b50db9080dab7f6e23ebc3d7c"
+      },
+      {
+        "path": "piano/B4.mp3",
+        "size": 187832,
+        "sha256": "eab85d81b7b0abeab68c22198b60a81df77453642ffc3f06aaef4d72cc8f50fe"
+      },
+      {
+        "path": "guitar-acoustic/G3.mp3",
+        "size": 137752,
+        "sha256": "8a8ddf06e2d4824f5086e6ad0cf32371da6afc594bf2efd9bb5ec9a2dfe9c040"
+      },
+      {
+        "path": "guitar-acoustic/C4.mp3",
+        "size": 83916,
+        "sha256": "594c98aa8f9d1a426078e91899525f143e0bc82218b7b2c3f4cea2c54c181925"
+      },
+      {
+        "path": "guitar-acoustic/D4.mp3",
+        "size": 80786,
+        "sha256": "3572050294e58aae62d7fcaaf2d9a66a4f880bf2fb74e89160a1f6d069d516f2"
+      },
+      {
+        "path": "guitar-acoustic/E4.mp3",
+        "size": 109582,
+        "sha256": "3b02f5448695ac92f257ea9e36ba77be1b1b4a08f62a549b95c7ea9f5303ce14"
+      },
+      {
+        "path": "guitar-acoustic/F4.mp3",
+        "size": 113964,
+        "sha256": "f1d2f58575ac5cc666942c6f084d0328c2ceb28f485d315f41f66d9eafd33a05"
+      },
+      {
+        "path": "guitar-acoustic/G4.mp3",
+        "size": 102696,
+        "sha256": "f26371971ba4e34431a709985b3d09ef74be441a6c49612e085f7f8eaf825ef4"
+      },
+      {
+        "path": "guitar-acoustic/C5.mp3",
+        "size": 82664,
+        "sha256": "bed99fde143232c3a33847b82cf3e07c5d5e47b56d584d3d829d01deb9defbab"
+      }
+    ]
+  },
+  "motifs": {
+    "piano": {
+      "source": "piano",
+      "step": 0.19,
+      "hold": 1.05,
+      "notes": {
+        "ask": [
+          "C5",
+          "E5",
+          "D5"
+        ],
+        "ended": [
+          "G4",
+          "C5",
+          "E5",
+          "G5",
+          "C6"
+        ],
+        "failed": [
+          "E5",
+          "D5",
+          "B4"
+        ]
+      }
+    },
+    "guitar": {
+      "source": "guitar-acoustic",
+      "step": 0.15,
+      "hold": 0.9,
+      "notes": {
+        "ask": [
+          "E4",
+          "G4",
+          "F4"
+        ],
+        "ended": [
+          "G3",
+          "C4",
+          "E4",
+          "G4",
+          "C5"
+        ],
+        "failed": [
+          "G4",
+          "F4",
+          "D4"
+        ]
+      }
+    }
+  },
+  "processing": "Original note sequences; no pitch shifting; 4ms attack and 140ms tail fades; stereo 44100Hz PCM16 WAV; per-motif peak normalized to 0.55.",
+  "files": [
+    {
+      "file": "piano-question.wav",
+      "instrument": "piano",
+      "kind": "ask",
+      "seconds": 1.55,
+      "peak": 0.55,
+      "bytes": 273464,
+      "sha256": "32d351543f4fda33c8d121ea938c168e9347f7cee8a150b9676a695236acaa1e"
+    },
+    {
+      "file": "piano-success.wav",
+      "instrument": "piano",
+      "kind": "ended",
+      "seconds": 1.9300000000000002,
+      "peak": 0.55,
+      "bytes": 340496,
+      "sha256": "2cc6dfb95e77990973b0cca85a3daefec821bffb8aa4371e5f981e3b3011a891"
+    },
+    {
+      "file": "piano-error.wav",
+      "instrument": "piano",
+      "kind": "failed",
+      "seconds": 1.55,
+      "peak": 0.55,
+      "bytes": 273464,
+      "sha256": "b3cda051300000f34ee0c62c38d28ef4a22c0a3a7d29f5baab28fb5d03074f5a"
+    },
+    {
+      "file": "guitar-question.wav",
+      "instrument": "guitar",
+      "kind": "ask",
+      "seconds": 1.32,
+      "peak": 0.55,
+      "bytes": 232892,
+      "sha256": "099c61846b9913c025cd2a298fb9ea9dc1fccece14f9e9ea97f826040a7a6e65"
+    },
+    {
+      "file": "guitar-success.wav",
+      "instrument": "guitar",
+      "kind": "ended",
+      "seconds": 1.62,
+      "peak": 0.55,
+      "bytes": 285812,
+      "sha256": "2e8050b759135f3483bfb6b38e130695ee5576efb54fa548ff257cc030da3a9b"
+    },
+    {
+      "file": "guitar-error.wav",
+      "instrument": "guitar",
+      "kind": "failed",
+      "seconds": 1.32,
+      "peak": 0.55,
+      "bytes": 232892,
+      "sha256": "e80039ccc18210ca8e76ea02084bd731c7cb64a1942b19c6c86077900e3079be"
+    }
+  ]
+}

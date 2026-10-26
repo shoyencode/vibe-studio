@@ -1,0 +1,9 @@
+{
+  "name": "vibe-studio-private-gemini",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pinned optional Gemini CLI installation; downloaded only when selected.",
+  "dependencies": {
+    "@google/gemini-cli": "0.65.0"
+  }
+}

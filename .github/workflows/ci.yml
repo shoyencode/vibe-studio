@@ -1,0 +1,95 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+    tags: ["v*"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  checks:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Check version metadata
+        shell: bash
+        run: |
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+            const lock = JSON.parse(readFileSync("package-lock.json", "utf8"));
+            if (pkg.version !== lock.version || pkg.version !== lock.packages[""].version)
+              throw new Error("Package and lockfile versions differ.");
+            if (process.env.GITHUB_REF_TYPE === "tag" && process.env.GITHUB_REF_NAME !== `v${pkg.version}`)
+              throw new Error("The release tag must match the application version.");
+          '
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Install Node dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Node regressions
+        run: npm test
+      - name: Python bridge regressions
+        run: npm run test:bridge
+
+  windows-distribution:
+    needs: checks
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Install Node dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Desktop smoke
+        run: npm run test:smoke
+      - name: Prepare installer compiler
+        run: npm run installer:tools
+      - name: Build Windows installer and portable
+        run: npm run package:installer
+      - name: Bundled desktop smoke
+        run: |
+          $env:VIBE_STUDIO_SMOKE_APP = (Resolve-Path 'dist\Vibe Studio-win32-x64\resources\app').Path
+          npm run test:smoke
+      - name: Real portable executable smoke
+        run: npm run test:portable
+      - name: Installer preservation smoke
+        run: npm run test:installer
+      - name: Prepare versioned release assets
+        run: |
+          $version = (Get-Content -LiteralPath package.json -Raw | ConvertFrom-Json).version
+          Copy-Item -LiteralPath "dist\Vibe Studio-Setup-$version-x64.exe" -Destination "dist\Vibe-Studio-Setup-$version-x64.exe"
+          Copy-Item -LiteralPath 'dist\Vibe Studio-win32-x64.zip' -Destination "dist\Vibe-Studio-$version-win32-x64.zip"
+      - name: Retain verified Windows distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: vibe-studio-windows
+          if-no-files-found: error
+          path: |
+            dist/Vibe-Studio-*-win32-x64.zip
+            dist/Vibe-Studio-Setup-*-x64.exe

@@ -1,0 +1,36 @@
+# Reference kit project configuration. Schema: assets/poc.schema.json of the poc-0-start skill.
+client:
+  name: <client name>
+  sector: <sector>
+project:
+  name: <project name>
+  language: en             # language of the agent's replies and of every file produced (ISO 639-1, e.g. en, fr)
+  code_host: none          # github | azure-devops | gitlab | none
+  code_host_org:           # organization on the code host, if any
+stack:
+  front: angular           # folder name under stacks/ of the kit, or none
+  back: java-spring
+  database: h2
+  e2e: playwright          # end-to-end tests, one per acceptance criterion, and screen checks; the only automated tests
+needs:
+  - <key need, one line>
+paths:
+  root: poc
+  sources: poc/sources
+  specification: poc/specification.md
+  code: app
+costs:
+  budget_credits:          # optional, GitHub AI credits
+  credits_per_aiu: 1.0     # 1 AIU = 1 credit, verified 2026-10-07; change only if billing changes
+compliance:
+  distribution: demo-only  # demo-only | delivered (source, binaries or hosted service given to the client)
+  licenses:                # SPDX ids or prefixes like GPL-*, added to the default policy
+    allowed: []
+    review: []
+    denied: []
+  exceptions: []           # - component: pkg:npm/foo   reason: why it is acceptable
+  ai_disclosure: true
+  client_requirements:     # contractual requirements, one line
+run:                       # started by Vibe Studio (Application); filled by poc-4, updated by poc-5
+  services: []             # - name: Front   cwd: app/front   command: npx ng serve --port 4200   port: 4200   url: http://localhost:4200
+  open:                    # local address opened once every service is ready

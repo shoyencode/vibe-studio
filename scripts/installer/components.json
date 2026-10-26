@@ -1,0 +1,54 @@
+{
+  "python": {
+    "version": "3.13.12",
+    "url": "https://www.python.org/ftp/python/3.13.12/python-3.13.12-embed-amd64.zip",
+    "integrity": "sha256:76f238f606250c87c6beac75dccd35ee99070a13490555936abb6cb64ecce3d0",
+    "license": "PSF-2.0; licence included in the archive"
+  },
+  "github": {
+    "version": "2.103.0",
+    "url": "https://github.com/cli/cli/releases/download/v2.103.0/gh_2.103.0_windows_amd64.zip",
+    "integrity": "sha256:80c846a5b8432672ca6373b34ce9de998c9686aaa1885c845f2e1ee81f713726",
+    "license": "MIT; https://github.com/cli/cli; licence included in the archive"
+  },
+  "compiler": {
+    "version": "6.7.3",
+    "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe",
+    "integrity": "sha256:9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732",
+    "license": "Inno Setup licence; https://jrsoftware.org/files/is/license.txt"
+  },
+  "git": {
+    "version": "2.56.0",
+    "url": "https://github.com/git-for-windows/git/releases/download/v2.56.0.windows.2/PortableGit-2.56.0.2-64-bit.7z.exe",
+    "integrity": "sha256:075e158ef8e1f0ab80b347e245405d3eca735c2dc88fd8e032e137d0ca61f61b",
+    "license": "GPL-2.0; https://github.com/git-for-windows/git; licences included in the download"
+  },
+  "apm": {
+    "version": "0.34.0",
+    "url": "https://github.com/microsoft/apm/releases/download/v0.34.0/apm-windows-x86_64.zip",
+    "integrity": "sha256:e9b3dd16b8533af681ea70128ceb8baed983c47cd73d0488ff28dbd5df85def0",
+    "license": "MIT; https://github.com/microsoft/apm"
+  },
+  "node": {
+    "version": "24.22.1",
+    "url": "https://nodejs.org/dist/v24.22.1/node-v24.22.1-win-x64.zip",
+    "integrity": "sha256:d2046d28c2c3dcd211ac5145c0bf30e2047ef9dfb306693c8c6e2eccd8b95fa5",
+    "license": "MIT and third-party notices included in the archive"
+  },
+  "claude": {
+    "version": "2.1.308",
+    "url": "https://registry.npmjs.org/@anthropic-ai/claude-code-win32-x64/-/claude-code-win32-x64-2.1.308.tgz",
+    "integrity": "sha512-OxskS6onyOdKqdvd9/33M5//ItBdAnoI/cjdp0PU47KDMDF5WWE82Slo0ISq8kpNr2wK0lXB5Z2Rv1weJR0znw==",
+    "license": "Anthropic commercial terms; downloaded only at the user's request, never bundled"
+  },
+  "codex": {
+    "version": "0.163.0",
+    "url": "https://registry.npmjs.org/@openai/codex/-/codex-0.163.0-win32-x64.tgz",
+    "integrity": "sha512-QQGQ/q9dCJ5C5jqhgFrwycpWG3szIyFNThMiKl6hYtu6N/eM3Qd7StesgnCFAfzVED8IkE3N3oH71szzcludqw==",
+    "license": "Apache-2.0; https://github.com/openai/codex"
+  },
+  "gemini": {
+    "version": "0.65.0",
+    "license": "Apache-2.0; https://github.com/google-gemini/gemini-cli; npm dependency integrities in gemini/package-lock.json"
+  }
+}

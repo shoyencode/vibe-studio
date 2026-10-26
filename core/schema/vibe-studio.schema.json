@@ -1,0 +1,767 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vibe-studio.schema.json",
+  "title": "Vibe Studio kit contract",
+  "description": "What a kit declares so that the Vibe Studio can drive it: configuration, working units, steps, deliverables, optional modules and guards. Protocol version 2. Documented in docs/vibe-studio-contract.md.",
+  "type": "object",
+  "required": [
+    "protocolVersion",
+    "kit",
+    "config",
+    "steps"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "modelChoice": {
+      "type": "object",
+      "required": ["default", "models"],
+      "additionalProperties": false,
+      "properties": {
+        "default": { "$ref": "#/$defs/text" },
+        "models": {
+          "type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/text" }
+        }
+      }
+    },
+    "modelPolicy": {
+      "type": "object",
+      "required": ["default", "models"],
+      "additionalProperties": false,
+      "properties": {
+        "default": { "$ref": "#/$defs/text" },
+        "models": {
+          "type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/text" }
+        },
+        "byProducerFamily": {
+          "type": "object",
+          "propertyNames": { "enum": ["openai", "anthropic", "google", "unknown"] },
+          "additionalProperties": { "$ref": "#/$defs/modelChoice" }
+        }
+      }
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "i18n": {
+      "type": "object",
+      "description": "Translations by ISO 639-1 language code. English fields are the reference.",
+      "propertyNames": {
+        "pattern": "^[a-z]{2}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "pattern": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Project-relative path. Placeholders: {name} declared in config.placeholders, {unit} for the folder of the unit, {n} for its number."
+    },
+    "patterns": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pattern"
+      }
+    },
+    "pointer": {
+      "type": "string",
+      "pattern": "^(/[^/]+)+$",
+      "description": "JSON pointer into the configuration file."
+    },
+    "stepText": {
+      "type": "object",
+      "required": [
+        "title",
+        "summary",
+        "returns"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "summary": {
+          "$ref": "#/$defs/text"
+        },
+        "returns": {
+          "$ref": "#/$defs/text"
+        },
+        "i18n": {
+          "$ref": "#/$defs/i18n"
+        }
+      }
+    },
+    "guardEntry": {
+      "type": "object",
+      "required": [
+        "id",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Z][0-9]{2}$"
+        },
+        "reason": {
+          "$ref": "#/$defs/text",
+          "description": "Sent to the AI when the guard blocks; says what to do instead."
+        },
+        "description": {
+          "$ref": "#/$defs/text",
+          "description": "Shown to the user in the Vibe Studio."
+        },
+        "paths": {
+          "$ref": "#/$defs/patterns"
+        },
+        "except": {
+          "$ref": "#/$defs/patterns"
+        },
+        "scripts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "scriptOnly: commands naming one of these scripts may write the paths."
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "confirmCommands: regular expressions of shell commands confirmed by the user."
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "skills: skills of other steps still allowed in this step."
+        },
+        "folder": {
+          "$ref": "#/$defs/pattern",
+          "description": "history: folder of the copies."
+        },
+        "i18n": {
+          "$ref": "#/$defs/i18n"
+        }
+      }
+    },
+    "endCheck": {
+      "type": "object",
+      "required": [
+        "id",
+        "check",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^E[0-9]+$"
+        },
+        "check": {
+          "enum": [
+            "reported",
+            "noTaskInProgress",
+            "modified",
+            "reviewDecided",
+            "planStatus"
+          ]
+        },
+        "path": {
+          "$ref": "#/$defs/pattern"
+        },
+        "reason": {
+          "$ref": "#/$defs/text"
+        },
+        "description": {
+          "$ref": "#/$defs/text"
+        },
+        "i18n": {
+          "$ref": "#/$defs/i18n"
+        }
+      }
+    },
+    "guards": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Rules imposed by the Vibe Studio on the tools of the AI. Permanent at the root of the contract, per step in a step.",
+      "properties": {
+        "readOnly": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/guardEntry"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/guardEntry"
+              }
+            }
+          ]
+        },
+        "scriptOnly": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/guardEntry"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/guardEntry"
+              }
+            }
+          ]
+        },
+        "forbidCreate": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/guardEntry"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/guardEntry"
+              }
+            }
+          ]
+        },
+        "requireTaskInProgress": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/guardEntry"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/guardEntry"
+              }
+            }
+          ]
+        },
+        "secrets": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/guardEntry"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/guardEntry"
+              }
+            }
+          ]
+        },
+        "confirmCommands": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/guardEntry"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/guardEntry"
+              }
+            }
+          ]
+        },
+        "skills": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/guardEntry"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/guardEntry"
+              }
+            }
+          ]
+        },
+        "subagentsReadOnly": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/guardEntry"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/guardEntry"
+              }
+            }
+          ]
+        },
+        "singleTaskInProgress": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/guardEntry"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/guardEntry"
+              }
+            }
+          ]
+        },
+        "history": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/guardEntry"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/guardEntry"
+              }
+            }
+          ]
+        },
+        "end": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/endCheck"
+          },
+          "description": "Checks when the AI ends the step; it is sent back to work at most twice."
+        }
+      }
+    }
+  },
+  "properties": {
+    "protocolVersion": {
+      "const": 2
+    },
+    "modelPolicies": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Launch choices. Priority: step, agent, default, then historical scalar model. Defaults must belong to their candidates. Older strict validators require an update.",
+      "properties": {
+        "default": { "$ref": "#/$defs/modelPolicy" },
+        "agents": {
+          "type": "object", "propertyNames": { "pattern": "^[a-z][a-z0-9-]*$" },
+          "additionalProperties": { "$ref": "#/$defs/modelPolicy" }
+        },
+        "steps": {
+          "type": "object", "propertyNames": { "pattern": "^[0-9]+-[a-z-]+$" },
+          "additionalProperties": { "$ref": "#/$defs/modelPolicy" }
+        }
+      }
+    },
+    "kit": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "entrySkill"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "Package name of the kit, as in apm.yml."
+        },
+        "name": {
+          "$ref": "#/$defs/text"
+        },
+        "description": {
+          "$ref": "#/$defs/text"
+        },
+        "about": {
+          "$ref": "#/$defs/text",
+          "description": "Longer presentation of the kit (Markdown), shown in the About space of the Vibe Studio."
+        },
+        "entrySkill": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "Skill folder holding this contract (assets/vibe-studio.json)."
+        },
+        "i18n": {
+          "$ref": "#/$defs/i18n"
+        }
+      }
+    },
+    "config": {
+      "type": "object",
+      "required": [
+        "file",
+        "schema"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]+\\.ya?ml$",
+          "description": "Configuration file at the project root."
+        },
+        "schema": {
+          "$ref": "#/$defs/text",
+          "description": "JSON Schema of the configuration, relative to the entry skill folder."
+        },
+        "template": {
+          "$ref": "#/$defs/text",
+          "description": "Starting configuration, relative to the entry skill folder."
+        },
+        "language": {
+          "$ref": "#/$defs/pointer",
+          "description": "Output language of the project (ISO code)."
+        },
+        "title": {
+          "$ref": "#/$defs/pointer",
+          "description": "Name of the project shown by the Vibe Studio."
+        },
+        "paths": {
+          "$ref": "#/$defs/pointer",
+          "description": "Object whose string values are project-relative paths that must stay inside the project."
+        },
+        "placeholders": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9]*$",
+            "not": {
+              "enum": [
+                "unit",
+                "n"
+              ]
+            }
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "pointer",
+              "default"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "pointer": {
+                "$ref": "#/$defs/pointer"
+              },
+              "default": {
+                "$ref": "#/$defs/text"
+              }
+            }
+          }
+        }
+      }
+    },
+    "units": {
+      "type": "object",
+      "required": [
+        "id",
+        "label",
+        "plural",
+        "folder"
+      ],
+      "additionalProperties": false,
+      "description": "Working unit repeated in the project (scenario, batch, lot). Steps with scope unit run once per unit.",
+      "properties": {
+        "catalog": {
+          "type": "object",
+          "required": ["script"],
+          "additionalProperties": false,
+          "description": "Read-only kit provider. Python script relative to installed skills; --project argument, JSON stdin {config,placeholders}, JSON stdout {units:[{id,title,dependsOn?}]}. No project writes.",
+          "properties": {
+            "script": {
+              "type": "string",
+              "pattern": "^(?:[A-Za-z0-9_-]+/)+[A-Za-z0-9_-]+\\.py$"
+            }
+          }
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "label": {
+          "$ref": "#/$defs/text"
+        },
+        "plural": {
+          "$ref": "#/$defs/text"
+        },
+        "folder": {
+          "type": "string",
+          "pattern": "\\{n\\}",
+          "description": "Folder of unit {n}, for example {root}/build/scenario-{n}."
+        },
+        "evidence": {
+          "$ref": "#/$defs/pattern",
+          "description": "Folder whose files mark a unit as built."
+        },
+        "i18n": {
+          "$ref": "#/$defs/i18n"
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "skill",
+          "agent",
+          "scope",
+          "requires",
+          "outputs"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9]+-[a-z-]+$"
+          },
+          "title": {
+            "$ref": "#/$defs/text"
+          },
+          "skill": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "agent": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "scope": {
+            "enum": [
+              "project",
+              "unit"
+            ]
+          },
+          "configures": {
+            "type": "boolean",
+            "description": "The step creates or edits the configuration: the Vibe Studio opens the configuration form first."
+          },
+          "requires": {
+            "$ref": "#/$defs/patterns"
+          },
+          "outputs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/pattern"
+            }
+          },
+          "approves": {
+            "$ref": "#/$defs/patterns",
+            "description": "Deliverables the user approves at the checkpoint of the step (approvals module)."
+          },
+          "requiresBuiltUnit": {
+            "type": "boolean",
+            "description": "At least one unit must have evidence."
+          },
+          "contextTier": {
+            "enum": [
+              "long_context"
+            ],
+            "description": "Context window asked at launch. Absent: the default window."
+          },
+          "summary": {
+            "$ref": "#/$defs/text"
+          },
+          "returns": {
+            "$ref": "#/$defs/text"
+          },
+          "variants": {
+            "type": "object",
+            "description": "Texts of the step when the review module changes its purpose.",
+            "propertyNames": {
+              "enum": [
+                "corrections",
+                "rereview"
+              ]
+            },
+            "additionalProperties": {
+              "$ref": "#/$defs/stepText"
+            }
+          },
+          "guards": {
+            "$ref": "#/$defs/guards"
+          },
+          "i18n": {
+            "$ref": "#/$defs/i18n"
+          }
+        }
+      }
+    },
+    "deliverables": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "patterns"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "title": {
+                "$ref": "#/$defs/text"
+              },
+              "patterns": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Path patterns; * matches one path segment, ** any depth."
+              },
+              "i18n": {
+                "$ref": "#/$defs/i18n"
+              }
+            }
+          }
+        },
+        "extra": {
+          "$ref": "#/$defs/patterns",
+          "description": "Files listed even when no step produces them."
+        }
+      }
+    },
+    "modules": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tasks": {
+          "type": "object",
+          "required": [
+            "file"
+          ],
+          "additionalProperties": false,
+          "description": "Markdown task list per unit: markers [ ] [~] [x] [!], ids T01 / R01, a plan status line.",
+          "properties": {
+            "file": {
+              "$ref": "#/$defs/pattern"
+            },
+            "buildStep": {
+              "type": "string",
+              "description": "Step that works through the tasks."
+            },
+            "requirements": {
+              "$ref": "#/$defs/pattern",
+              "description": "Contract of the unit whose tables give requirement ids (AC1, BR1…)."
+            }
+          }
+        },
+        "review": {
+          "type": "object",
+          "required": [
+            "file",
+            "buildStep",
+            "reviewStep"
+          ],
+          "additionalProperties": false,
+          "description": "Review rounds with correction tasks R and user feedback.",
+          "properties": {
+            "file": {
+              "$ref": "#/$defs/pattern"
+            },
+            "buildStep": {
+              "type": "string"
+            },
+            "reviewStep": {
+              "type": "string"
+            },
+            "feedback": {
+              "type": "boolean",
+              "description": "The user can add feedback as correction tasks."
+            }
+          }
+        },
+        "sources": {
+          "type": "object",
+          "required": [
+            "folder"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "folder": {
+              "$ref": "#/$defs/pattern"
+            },
+            "inventory": {
+              "$ref": "#/$defs/pattern",
+              "description": "JSON inventory written by the import script."
+            },
+            "importStep": {
+              "type": "string"
+            }
+          }
+        },
+        "costs": {
+          "type": "object",
+          "required": [
+            "script"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "script": {
+              "type": "string",
+              "description": "Cost script, relative to the skills folder (report --json --read-only, mark)."
+            },
+            "report": {
+              "$ref": "#/$defs/pattern"
+            },
+            "budget": {
+              "$ref": "#/$defs/pointer"
+            },
+            "creditsPerAiu": {
+              "$ref": "#/$defs/pointer"
+            }
+          }
+        },
+        "approvals": {
+          "type": "object",
+          "required": [
+            "script",
+            "file"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "script": {
+              "type": "string",
+              "description": "Approval script, relative to the skills folder (record, status)."
+            },
+            "file": {
+              "$ref": "#/$defs/pattern"
+            }
+          }
+        },
+        "application": {
+          "type": "object",
+          "required": [
+            "pointer"
+          ],
+          "additionalProperties": false,
+          "description": "How to start the application built by the kit: services and address to open.",
+          "properties": {
+            "pointer": {
+              "$ref": "#/$defs/pointer"
+            }
+          }
+        }
+      }
+    },
+    "guards": {
+      "$ref": "#/$defs/guards"
+    }
+  }
+}
