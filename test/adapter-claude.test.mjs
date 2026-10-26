@@ -214,9 +214,13 @@ test("permissions go to the window with the request kinds of the Vibe Studio", a
         { behavior: "deny", message: "non", decisionClassification: "user_reject" });
     assert.equal(seen[2].request.kind, "url");
     assert.equal(seen[2].request.canOfferSessionApproval, false);
-    await canUseTool("Read", { file_path: "C:\\outside\\secret.txt" }, { toolUseID: "t4", blockedPath: "C:\\outside\\secret.txt" });
+    const outside = path.resolve(dir, "..", "outside", "secret.txt");
+    await canUseTool("Read", { file_path: outside }, { toolUseID: "t4", blockedPath: outside });
     assert.equal(seen[3].request.kind, "read");
-    assert.equal(seen[3].request.resolvedPath, path.resolve("C:\\outside\\secret.txt"));
+    assert.equal(seen[3].request.resolvedPath, outside);
+    answers.push("approve");
+    await canUseTool("Read", { file_path: "relative.txt" }, { toolUseID: "relative-read" });
+    assert.equal(seen[4].request.resolvedPath, path.resolve(dir, "relative.txt"));
     assert.deepEqual(events.map(e => e.type).slice(0, 2), ["permission.requested", "permission.completed"]);
     assert.equal(permissionRequest("mcp__playwright__browser_click", {}, { mcpServer: { name: "playwright", source: "project" } }).kind, "mcp");
     assert.equal(permissionRequest("mcp__playwright__browser_click", {}).toolName, "browser_click");

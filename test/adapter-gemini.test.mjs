@@ -120,6 +120,8 @@ test("a missing Gemini CLI is reported as harness.missing, the npm shim is resol
     await writeFile(path.join(dir, "node.exe"), "");
     await writeFile(path.join(dir, "gemini.cmd"), `@ECHO off\r\n"%_prog%"  "%dp0%\\node_modules\\@google\\gemini-cli\\bundle\\gemini.js" %*\r\n`);
     assert.deepEqual(resolveCommand("gemini", { platform: "win32", env: { PATH: dir } }), { file: path.join(dir, "node.exe"), args: [script] });
+    assert.deepEqual(resolveCommand("gemini", { platform: "win32", env: { PATH: [path.join(dir, "none"), dir].join(";") } }),
+        { file: path.join(dir, "node.exe"), args: [script] }, "Windows PATH uses semicolons even when tested on Linux");
     assert.equal(resolveCommand("gemini", { platform: "win32", env: { PATH: path.join(dir, "none") } }), null);
 });
 

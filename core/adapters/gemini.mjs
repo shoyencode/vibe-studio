@@ -44,7 +44,7 @@ const writeKey = (file, content) => `${key(file)}\0${String(content).replace(/\r
 // Command line of the Gemini CLI. On Windows the npm shim gemini.cmd is resolved to node + the script of the package,
 // so that the process starts without a shell.
 export function resolveCommand(command = "gemini", { platform = process.platform, env = process.env } = {}) {
-    const dirs = String(env.PATH ?? env.Path ?? "").split(path.delimiter).filter(Boolean);
+    const dirs = String(env.PATH ?? env.Path ?? "").split(platform === "win32" ? ";" : ":").filter(Boolean);
     const find = name => path.isAbsolute(name) ? (existsSync(name) ? name : null) : dirs.map(dir => path.join(dir, name)).find(existsSync) || null;
     const nodeNear = dir => {
         const local = path.join(dir, platform === "win32" ? "node.exe" : "node");
@@ -60,7 +60,7 @@ export function resolveCommand(command = "gemini", { platform = process.platform
     if (/\.exe$/i.test(shim)) return { file: shim, args: [] };
     let script = null;
     try { script = readFileSync(shim, "utf8").match(/"%dp0%\\([^"]+?\.m?js)"/)?.[1] || null; } catch { /* unreadable shim */ }
-    const entry = path.join(path.dirname(shim), script || path.join("node_modules", "@google", "gemini-cli", "bundle", "gemini.js"));
+    const entry = path.join(path.dirname(shim), ...(script ? script.split(/[\\/]/) : ["node_modules", "@google", "gemini-cli", "bundle", "gemini.js"]));
     return existsSync(entry) ? { file: nodeNear(path.dirname(shim)), args: [entry] } : null;
 }
 

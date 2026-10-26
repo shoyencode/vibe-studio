@@ -2,6 +2,12 @@
 
 Versions follow Semantic Versioning. Application versions are independent of kit release numbers.
 
+## Unreleased
+
+### Fixed
+
+1. `ci`: Claude permission tests use native absolute paths on Linux and Windows; Gemini launcher resolution handles Windows shim paths and PATH separators consistently across test hosts.
+
 ## 3.0.0
 
 ### Added
