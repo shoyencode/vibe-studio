@@ -151,7 +151,7 @@ Bridge checks use only the bundled reference fixtures: they validate protocol-2 
 
 CI: [GitHub Actions](https://github.com/shoyencode/vibe-studio/actions) runs `.github/workflows/ci.yml` on pull requests, pushes to `main`/`master`, version tags and manual dispatch. Node/Python regressions run on hosted Ubuntu and Windows runners. Once both pass, a hosted Windows runner checks the desktop, builds the installer and portable, and checks the bundled application, real portable executable and install/reinstall/uninstall preservation. Each command has its own step so an early failure cannot be hidden by a later successful command. Package/lockfile versions must agree, and a version tag must match them.
 
-The `vibe-studio-windows` workflow artifact contains `Vibe-Studio-Setup-X.Y.Z-x64.exe` and `Vibe-Studio-X.Y.Z-win32-x64.zip`, named for GitHub release upload and application update detection. CI has read-only repository permissions and does not create tags or publish releases. Publication remains an explicit maintainer action; upload the extracted EXE and ZIP as release assets, not the enclosing Actions artifact archive.
+The `vibe-studio-windows` workflow artifact contains `Vibe-Studio-Setup-X.Y.Z-x64.exe` and `Vibe-Studio-X.Y.Z-win32-x64.zip`, named for GitHub release upload and application update detection. Pushing a matching `vX.Y.Z` tag automatically creates a GitHub release with generated release notes and attaches the verified EXE and ZIP after all checks pass. Only the tag-triggered publication job has repository write permission; pull requests, branch pushes and manual runs retain artifacts without publishing. CI never creates tags or replaces an existing release; publication fails explicitly if the release already exists.
 
 ## Contributing
 

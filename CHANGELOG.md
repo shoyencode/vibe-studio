@@ -9,6 +9,7 @@ Versions follow Semantic Versioning. Application versions are independent of kit
 1. `app`: correction tasks (R) can be edited, manually marked done or deleted as a fallback without running the AI. Confirmations, active-session protection and stale-file checks preserve task history and prevent accidental overwrites.
 2. `app`: step launches and new discussions offer the reasoning efforts reported by their model and harness. Conversation metrics distinguish the selected effort and context budget from verified runtime settings.
 3. `app`: installed Windows copies check public GitHub releases at startup and at most once a day. Updates download only on request, are SHA-256 verified before launch and require confirmation before closing the application; portable copies link to the release page.
+4. `ci`: pushing a version tag automatically publishes a GitHub release with the verified Windows installer and portable ZIP after all checks pass.
 
 ### Changed
 

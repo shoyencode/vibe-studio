@@ -121,7 +121,7 @@ release: vibe-studio 0.4.0
 3. Rename `## Unreleased` to `## X.Y.Z` in `CHANGELOG.md`. Update the application version in `package.json` and `package-lock.json` together, including the root package entry of the lockfile. Update current-version assertions or examples where needed; preserve historical release and provenance text. Do not change kit versions or protocol versions as a side effect.
 4. Run the full checks listed in "Before a pull request", including Windows packaging and the real portable smoke. Verify the executable metadata, ZIP contents and preservation of user data. Recheck bundled dependency licences before distribution.
 5. If a release commit is requested, use `release: vibe-studio X.Y.Z`. Keep it limited to the version change, release heading and directly related release metadata.
-6. If a tag is requested, create annotated tag `vX.Y.Z` with message `Vibe Studio X.Y.Z`. If a push is requested, use the confirmed remote and branch of this application. Check that the remote branch and tag point to the release commit. Publishing the portable is a separate, explicit operation; never move a published tag.
+6. If a tag is requested, create annotated tag `vX.Y.Z` with message `Vibe Studio X.Y.Z`. If a push is requested, use the confirmed remote and branch of this application. Check that the remote branch and tag point to the release commit. Pushing a version tag automatically publishes the verified installer and portable in a GitHub release after CI passes; obtain explicit authorisation for this publication before pushing the tag. Never move a published tag.
 
 ## Language
 
