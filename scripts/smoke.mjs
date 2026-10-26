@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import assert from "node:assert/strict";
@@ -14,7 +14,7 @@ const executable = process.env.VIBE_STUDIO_SMOKE_EXECUTABLE || require("electron
 const artifacts = process.env.VIBE_STUDIO_SMOKE_ARTIFACTS;
 if (artifacts) await mkdir(artifacts, { recursive: true });
 const screenshot = name => artifacts ? page.screenshot({ path: path.join(artifacts, name) }) : Promise.resolve();
-const base = await mkdtemp(path.join(os.tmpdir(), "vibe-studio-smoke-"));
+const base = await realpath(await mkdtemp(path.join(os.tmpdir(), "vibe-studio-smoke-")));
 const project = path.join(base, "project"), appData = path.join(base, "appdata"), data = path.join(appData, "Vibe Studio");
 await cp(path.join(repo, "test", "fixtures", "demo"), project, { recursive: true });
 await mkdir(data, { recursive: true });

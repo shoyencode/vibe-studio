@@ -7,6 +7,7 @@ Versions follow Semantic Versioning. Application versions are independent of kit
 ### Fixed
 
 1. `ci`: Claude permission tests use native absolute paths on Linux and Windows; Gemini launcher resolution handles Windows shim paths and PATH separators consistently across test hosts.
+2. `ci`: the desktop smoke uses a canonical temporary directory so Windows short-name aliases do not fail file-opening assertions against their equivalent long paths.
 
 ## 3.0.0
 
