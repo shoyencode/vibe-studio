@@ -30,7 +30,7 @@ const [folder] = await packager({
     asar: false,
     // The Claude Code binary bundled with its SDK (proprietary, about 300 MB) is not redistributed: the adapter uses the
     // Claude Code installed by the user (claude on the PATH).
-    ignore: [/^\/test(\/|$)/, /^\/dist(\/|$)/, /^\/scripts(\/|$)/, /^\/README\.md$/,
+    ignore: [/^\/test(\/|$)/, /^\/dist(\/|$)/, /^\/scripts(\/|$)/, /^\/catalog-template(\/|$)/, /^\/README\.md$/,
         /^\/(?:\.test-|\.profile-test-)[^/]+(\/|$)/,
         /^\/npm-debug\.log[^/]*$/,
         /^\/(?:docs|\.github|\.impeccable|\.venv|__pycache__)(\/|$)/, /^\/(?:\.gitignore|requirements\.txt|CHANGELOG\.md)$/,

@@ -1,4 +1,5 @@
-const backgroundRoutes = new Set(["/projects", "/snapshot", "/conversation", "/app/logs", "/updates"]);
+const backgroundRoutes = new Set(["/projects", "/snapshot", "/conversation", "/app/logs", "/updates",
+    "/kits/workshop/status", "/kits/workshop/check", "/kits/draft/status", "/kits/schema"]);
 
 // Windows owns the animation; no estimated percentage or rendering loop is needed.
 export class TaskbarActivity {

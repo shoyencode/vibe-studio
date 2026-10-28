@@ -21,6 +21,7 @@
     "test": "node --test \"test/**/*.test.mjs\"",
     "test:bridge": "python -m unittest discover -s test -p \"test_*.py\"",
     "test:smoke": "node scripts/smoke.mjs",
+    "test:workshop": "node scripts/smoke-kit-workshop.mjs",
     "test:portable": "node scripts/smoke-portable.mjs",
     "package": "node scripts/package.mjs",
     "installer:tools": "node scripts/installer/build.mjs --tools",

@@ -1,6 +1,7 @@
 import { t as translate, pick, phaseText } from "/i18n.mjs";
 import { parse, render as renderMarkdown } from "/markdown.mjs";
 import { nextJourneyStep, automaticallyCompletedBuild } from "/journey.mjs";
+import { createKitWorkshopUI } from "./kit-workshop-ui.mjs";
 
 const main = document.querySelector("#main");
 const notice = document.querySelector("#notice");
@@ -13,13 +14,15 @@ let settingsTab = "config", highlight = null, historyOpen = false, inflight = nu
 // Reader stack: deliverables opened full page; origin is the space to return to.
 let reading = [], origin = null;
 const formValues = new Map();
-const secondary = ["about", "settings"];
+const secondary = ["about"];
 let appLog = null, appLogTimer = null, appAction = null, preferences = null, harnesses = null;
 let noticeTimer;
 let historyRevision = 0;
 let updateState = null, updateWork = false;
+let seenKitUpdate = "";
 function showNotice(content, error = false) {
     clearTimeout(noticeTimer);
+    delete notice.dataset.attention;
     notice.className = content ? `notice${error ? " error" : ""}` : "";
     notice.setAttribute("role", error ? "alert" : "status");
     notice.replaceChildren(...(Array.isArray(content) ? content : content ? [content] : []));
@@ -33,7 +36,7 @@ notice.addEventListener("focusout", () => { if (noticeTimer && !notice.matches("
 function applyTheme() {
     document.documentElement.dataset.theme = preferences?.theme || "system";
 }
-const lang = () => pick(state?.language);
+const lang = () => pick(state?.language || projects?.language);
 // Unit labels (scenario, topic…) come from the kit contract.
 function unitVars() {
     const units = state?.kit?.contract?.units;
@@ -119,8 +122,11 @@ function confirmDialog(title, message, action) {
         const actions = el("div", undefined, "actions");
         let answer = false;
         const cancel = button(t("launch.cancel"), () => dialog.close());
-        actions.append(cancel, button(action, () => { answer = true; dialog.close(); }, "danger"));
-        content.replaceChildren(heading, el("p", message), actions);
+        actions.append(cancel, button(action, () => {
+            if ([...content.querySelectorAll("form")].some(form => !form.reportValidity())) return;
+            answer = true; dialog.close();
+        }, "danger"));
+        content.replaceChildren(heading, message instanceof Node ? message : el("p", message), actions);
         dialog.addEventListener("close", () => resolve(answer), { once: true });
         dialog.showModal(); cancel.focus();
     });
@@ -218,7 +224,7 @@ function showError(error) {
 }
 async function api(route, data = {}) {
     const answer = await window.vibeStudio.call(route, data);
-    if (answer?.error) throw Object.assign(new Error(answer.error), { code: answer.code });
+    if (answer?.error) throw Object.assign(new Error(answer.error), { code: answer.code, ...(answer.issues ? { issues: answer.issues } : {}) });
     return answer?.result;
 }
 function table(headers, rows, caption) {
@@ -1206,10 +1212,11 @@ function updateControls(full = false) {
     box.append(actions); return box;
 }
 function settingsView() {
+    if (!state?.kit && !["appearance", "alerts", "harness"].includes(settingsTab)) settingsTab = "appearance";
     const personal = ["appearance", "alerts", "harness"].includes(settingsTab);
     const scopes = el("div", undefined, "segmented settings-scopes");
     scopes.setAttribute("role", "group"); scopes.setAttribute("aria-label", t("settings.scope"));
-    for (const [id, tab] of [["personal", "appearance"], ["project", "config"]]) {
+    for (const [id, tab] of [["personal", "appearance"], ...(state?.kit ? [["project", "config"]] : [])]) {
         const b = button(t(`settings.${id}`), () => { settingsTab = tab; render(); });
         b.setAttribute("aria-pressed", String(personal === (id === "personal"))); scopes.append(b);
     }
@@ -1446,10 +1453,16 @@ function restoreFocus(saved) {
 }
 function render() {
     const saved = captureFocus();
+    const settings = document.querySelector("#settings");
+    settings.title = t("space.settings");
+    document.querySelector("#settings-label").textContent = t("space.settings");
+    if (view === "settings") settings.setAttribute("aria-current", "page");
+    else settings.removeAttribute("aria-current");
     renderView();
     restoreFocus(saved);
 }
 function renderView() {
+    main.classList.remove("ws-main");
     if (view === "projects" || !state) { renderProjects(); return; }
     const numbers = state.kit?.scenarios || [];
     if (numbers.length && !numbers.includes(scenario) && (state.kit.unitCatalog || scenario !== numbers.at(-1) + 1)) scenario = numbers[0];
@@ -1458,11 +1471,11 @@ function renderView() {
     const transcriptScrollTop = main.querySelector(".conversation-transcript")?.scrollTop || 0;
     main.replaceChildren(); main.setAttribute("aria-busy", "false");
     document.body.classList.toggle("reading", reading.length > 0);
-    if (!views[view] || ![...spacesFor(), ...secondary].includes(view)) view = "journey";
+    if (!views[view] || ![...spacesFor(), ...secondary, "settings"].includes(view)) view = "journey";
     const navigation = document.querySelector("#navigation"); navigation.replaceChildren();
     if (matchMedia("(max-width: 620px)").matches) {
         const label = el("label", t("nav.label")), select = el("select");
-        for (const space of [...spacesFor(), ...secondary]) { const option = el("option", t(`space.${space}`)); option.value = space; select.append(option); }
+        for (const space of [...spacesFor(), ...secondary, "settings"]) { const option = el("option", t(`space.${space}`)); option.value = space; select.append(option); }
         select.value = view; select.addEventListener("change", () => selectView(select.value)); label.append(select); navigation.append(label);
     } else {
         const running = activeRun();
@@ -1498,7 +1511,7 @@ function renderView() {
     main.append(heading);
     if (state.updates) updateState = state.updates;
     if (view !== "about" && ["available", "ready"].includes(updateState?.status)) main.append(updateControls());
-    if (!state.kit && view !== "conversation") { main.append(el("p", state.error, "error"), el("p", t("kit.missing"))); return; }
+    if (!state.kit && !["conversation", "settings"].includes(view)) { main.append(el("p", state.error, "error"), el("p", t("kit.missing"))); return; }
     views[view]();
     const register = main.querySelector(".journey-scroll");
     if (register) register.scrollTop = registerScrollTop;
@@ -1517,14 +1530,24 @@ async function refresh(force = false) {
     if (inflight) { await inflight.catch(() => {}); if (!force) return; }
     const run = (async () => {
         projects = await api("/projects");
+        const kitUpdate = projects.kitUpdate;
+        const kitUpdateKey = JSON.stringify([projects.current, kitUpdate?.version, kitUpdate?.applied, kitUpdate?.error]);
+        if (kitUpdate && seenKitUpdate !== kitUpdateKey) {
+            seenKitUpdate = kitUpdateKey;
+            if (kitUpdate.error) showError(new Error(kitUpdate.error));
+            else if (kitUpdate.applied) showNotice(t("author.updated", { version: kitUpdate.version }));
+        }
         state = projects.current ? adapt(await api("/snapshot")) : null;
-        if (!state) view = "projects";
+        if (!state && view !== "settings") view = "projects";
         if (costsAttemptFor !== (state?.project || null)) {
             clearTimeout(costsTimer); costsTimer = null; costsDirty = false; costsReadAt = 0;
             costs = null; costsFor = null; costsRequest = null; costsLoading = false; costsAttemptFor = null;
         }
         if (reading.length && state) await reloadReader();
-        if (force || (!dialog.open && !document.activeElement?.closest("form"))) render();
+        if (force || (!dialog.open && !document.activeElement?.closest("form"))) {
+            // Workshop fields commit on change: a refresh while typing waits for the field to lose focus.
+            if (!force && kitUI.typing()) kitUI.renderSoon(); else render();
+        }
         if (state?.kit?.contract?.modules?.costs && costsAttemptFor !== state.project) {
             costsAttemptFor = state.project;
             void readCosts().catch(showError);
@@ -1576,22 +1599,52 @@ function showVersions() {
 }
 function projectLabel() {
     const node = document.querySelector("#project");
-    if (!state) { node.replaceChildren(el("strong", t("projects.add"))); node.title = ""; return; }
+    const label = document.querySelector("#project-label");
+    if (!state) { label.replaceChildren(el("strong", t("projects.add"))); node.title = ""; return; }
     const name = (typeof state.kit?.title === "string" && state.kit.title) || state.project.split(/[\\/]/).filter(Boolean).at(-1);
-    node.replaceChildren(el("strong", name), el("small", t("projects.switch")));
+    label.replaceChildren(el("strong", name), el("small", t("projects.switch")));
     node.title = state.project;
 }
 
-// Projects: the home of Vibe Studio.
+// Projects: the home of Vibe Studio. The sidebar offers Projects, the kit workshop and official kits.
+function homeNavigation() {
+    const navigation = document.querySelector("#navigation");
+    navigation.replaceChildren();
+    const icons = {
+        projects: "M1.5 4V2.5h4l2 2h7v9h-13V4Z",
+        workshop: "M2.5 2.5h11v11h-11zM5 6h6M5 9h4",
+        catalog: "M8 1.5 14 4v8l-6 2.5L2 12V4Z",
+    };
+    for (const section of ["projects", "workshop", "catalog"]) {
+        const entry = button("", () => { kitUI.section = section; view = "projects"; render(); main.scrollTop = 0; main.focus(); });
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("viewBox", "0 0 16 16"); svg.setAttribute("width", "16"); svg.setAttribute("height", "16");
+        svg.setAttribute("class", "icon"); svg.setAttribute("aria-hidden", "true"); svg.setAttribute("focusable", "false");
+        const shape = document.createElementNS(svg.namespaceURI, "path");
+        shape.setAttribute("d", icons[section]); shape.setAttribute("fill", "none"); shape.setAttribute("stroke", "currentColor"); shape.setAttribute("stroke-width", "1.3");
+        svg.append(shape);
+        entry.append(svg, el("span", t(section === "projects" ? "author.projects" : section === "workshop" ? "author.workshop" : "author.catalog")));
+        if (view === "projects" && kitUI.section === section) entry.setAttribute("aria-current", "page");
+        navigation.append(entry);
+    }
+}
 function renderProjects() {
-    main.replaceChildren(); main.setAttribute("aria-busy", "false");
+    const root = document.querySelector("#main");
+    root.replaceChildren(); root.setAttribute("aria-busy", "false");
     document.body.classList.remove("reading");
     document.documentElement.lang = lang();
-    document.querySelector("#navigation").replaceChildren();
+    homeNavigation();
     projectLabel();
     document.querySelector("#refresh-label").textContent = t("header.refresh");
     showVersions();
     document.querySelector("#activity").textContent = "";
+    root.classList.toggle("ws-main", view === "projects" && kitUI.section === "workshop");
+    if (view === "settings") {
+        root.append(el("h1", t("space.settings")));
+        settingsView(); return;
+    }
+    const main = el("section"); root.append(main); kitUI.render(main);
+    if (kitUI.section !== "projects") return;
     main.append(el("h1", t("space.projects")), el("p", t("projects.intro"), "muted"));
     if (projects?.updates) updateState = projects.updates;
     main.append(updateControls(true));
@@ -1599,6 +1652,23 @@ function renderProjects() {
     main.append(el("p", t("projects.harness", { name: projects?.harnessName || "Copilot", state: harness?.login ? t("projects.connected", { login: harness.login }) : t("projects.notConnected") }), "muted"));
     const add = button(t("projects.add"), async () => { await api("/projects/choose"); view = "journey"; await refresh(true); }, "primary");
     main.append(add);
+    if (projects?.current) main.append(button(t("author.closeProject"), async () => {
+        if (!await confirmDialog(t("author.closeProject"), t("author.closeHint"), t("author.closeProject"))) return;
+        await api("/projects/close"); convo.sessionId = null; reading = []; await refresh(true);
+    }));
+    if (projects?.current) {
+        const status = projects.kitUpdate;
+        main.append(button(t("author.updateCheck"), async () => { await api("/kits/updates/check"); await refresh(true); }));
+        if (status?.error) main.append(el("p", status.error, "error"));
+        if (status?.version) {
+            main.append(el("p", t(status.applied ? "author.updated" : "author.updatePending", { version: status.version })));
+            if (!status.applied) main.append(button(t("author.update"), async () => {
+                if (await confirmDialog(t("author.update"), t("author.updateConfirm"), t("author.update"))) {
+                    await api("/kits/updates/apply", { allowModified: true }); await refresh(true);
+                }
+            }));
+        }
+    }
     const list = projects?.recent || [];
     main.append(el("h3", t("projects.recent")));
     if (!list.length) { main.append(el("p", t("projects.none"), "muted")); return; }
@@ -2018,6 +2088,7 @@ function requestNode(item) {
     return node;
 }
 function onConversation(change) {
+    kitUI.event(change.sessionId);
     if (change.op === "metrics" || change.item?.kind === "launch" || change.item?.kind === "error"
         || ["idle", "aborted", "paused", "chatClosed"].includes(change.item?.info)) scheduleCosts();
     if (change.op === "metrics") {
@@ -2030,7 +2101,10 @@ function onConversation(change) {
     if (change.op === "add" && change.item.kind === "request" && !change.item.answer) waitingRequests.set(change.item.key, change.sessionId);
     if (change.op === "update" && change.patch?.answer) waitingRequests.delete(change.key);
     if (view === "journey" && !reading.length && (change.item?.kind === "request" || change.patch?.answer)) render();
-    if (!waitingRequests.size) lastAttention = "";
+    if (!waitingRequests.size) {
+        lastAttention = "";
+        if (notice.dataset.attention) showNotice("");
+    }
     if (change.sessionId !== convo.sessionId) { if (change.op === "add" && change.item.kind === "launch") void loadConversation(change.sessionId); attention(); return; }
     if (change.op === "add") convo.items.push(change.item);
     const item = convo.items.find(entry => entry.key === (change.key || change.item.key));
@@ -2080,11 +2154,17 @@ function attention() {
     lastAttention = key;
     showNotice([el("span", t("convo.waiting")), " ", button(t("convo.goto"), async () => {
         const sessionId = [...waitingRequests.values()].at(-1);
+        if (await kitUI.goto(sessionId)) { showNotice(""); view = "projects"; render(); return; }
         await loadConversation(sessionId); showNotice(""); selectView("conversation");
     })]);
+    notice.dataset.attention = "true";
 }
 
 async function boot() {
+    window.addEventListener("kit-project-opened", () => { view = "journey"; void refresh(true).catch(showError); });
+    window.vibeStudio.on("vibe-studio:workshop", () => {
+        void kitUI.refresh().then(() => { if (view === "projects" && kitUI.section !== "projects") kitUI.renderSoon(); }).catch(showError);
+    });
     window.vibeStudio.on("vibe-studio:refresh", payload => {
         if (payload?.opened) { view = "journey"; void refresh(true).catch(showError); return; }
         clearTimeout(refreshTimer); refreshTimer = setTimeout(() => refresh().catch(showError), 300);
@@ -2094,14 +2174,24 @@ async function boot() {
     window.vibeStudio.on("vibe-studio:request", () => attention());
     window.vibeStudio.on("vibe-studio:alert", alertInfo => { if (alertInfo?.sound) chime(alertInfo.kind, alertInfo.theme); });
     window.vibeStudio.on("vibe-studio:goto", async target => {
+        if (target?.sessionId && await kitUI.goto(target.sessionId)) { view = "projects"; render(); return; }
         if (!state) return;
         if (target?.sessionId) await loadConversation(target.sessionId).catch(() => {});
         showNotice("");
         reading = []; selectView("conversation");
     });
     document.querySelector("#project").addEventListener("click", () => { reading = []; selectView("projects"); });
+    document.querySelector("#settings").addEventListener("click", () => {
+        reading = [];
+        if (view !== "settings") settingsTab = "appearance";
+        selectView("settings");
+    });
     try { preferences = await api("/preferences"); applyTheme(); } catch (error) { showError(error); }
     await refresh(true).catch(showError);
+    await kitUI.refresh().catch(showError);
+    void kitUI.loadCatalog();
     if (state) { view = "journey"; render(); }
 }
+const kitUI = createKitWorkshopUI({ el, button, api, t, lang, showError, showNotice, modelControls, catalogNotice, requestNode, spinner,
+    markdownBlock, render, openSettings: () => { reading = []; openSettings("harness"); } });
 await boot();

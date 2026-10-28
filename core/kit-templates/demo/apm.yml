@@ -1,0 +1,9 @@
+# Demo kit for the Vibe Studio: a fictional three-step journey used by the Vibe Studio tests and as an example
+# of how to write a kit. See docs/creating-a-kit.md. Not for client work.
+name: kit-demo
+version: 0.1.0
+description: Fictional kit that writes a scoping note and explores its topics, to show and test the Vibe Studio contract.
+license: MIT
+dependencies:
+  apm: []
+  mcp: []

@@ -42,11 +42,8 @@ nav { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; ov
 .brand img { border-radius: 7px; flex-shrink: 0; }
 #navigation { display: grid; gap: 4px; }
 .nav-secondary { display: grid; gap: 4px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
-.nav-foot { margin-top: auto; padding: 16px 4px 4px; display: grid; justify-items: start; gap: 10px; }
-.project { margin: 0; font-size: var(--text-xs); line-height: 1.4; color: var(--muted); overflow-wrap: anywhere; }
-.project strong { display: block; color: var(--ink); font-size: var(--text-sm); }
+.nav-foot { margin-top: auto; padding: 16px 4px 4px; display: grid; gap: 6px; }
 .pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 6px 14px; min-height: 32px; }
-nav .pill { border-color: var(--line); }
 .pill .icon { flex-shrink: 0; }
 #refresh[aria-busy="true"] { cursor: progress; }
 @keyframes spin { to { transform: rotate(360deg); } }

@@ -4,10 +4,25 @@ Versions follow Semantic Versioning. Application versions are independent of kit
 
 ## Unreleased
 
+### Added
+
+1. `app`: the Home sidebar offers Projects, Kit workshop and Official kits, and projects can be closed without changing their files.
+2. `app`: the kit workshop creates a kit from a mission description. The configured AI harness drafts it as proposals (presentation, steps, documents, approvals, instructions, safety rules) that the author accepts, edits or rejects one at a time; nothing enters the kit before review, and accepted changes keep it valid. Identifiers, skills and folders are generated, steps are edited on plain pages and any step can be improved by the AI.
+3. `app`: kit texts are written once in a chosen language; the AI translates them into the other kit languages for side-by-side review, and changed source texts mark their translations to update. Expert mode exposes the technical settings and the raw contract with a live check. The AI only reads the kit during drafting.
+4. `app`: kits can be tested in a project, shared as ZIP archives or imported from Git repositories. Managed installations track their files without replacing project configuration or deliverables.
+5. `app`: a configurable official GitHub catalog distributes checksum-verified kits after manual review. Authors explicitly submit pull requests; patch updates apply automatically when idle, while minor, major and locally modified updates require confirmation and retain a backup.
+6. `contributing`: a standalone catalog repository template provides contract and package validation, a manual-review checklist and release/index publication automation.
+
+### Changed
+
+1. `app`: personal preferences open from the Settings gear in the left sidebar instead of a button on Projects. Appearance, alerts and harness settings are available without an open project; project settings remain available when a kit is open.
+2. `app`: sidebar controls share full-width rectangular buttons, aligned icons and consistent typography. Project selection sits above the grouped Refresh and Settings actions.
+
 ### Fixed
 
-1. `ci`: Claude permission tests use native absolute paths on Linux and Windows; Gemini launcher resolution handles Windows shim paths and PATH separators consistently across test hosts.
-2. `ci`: the desktop smoke uses a canonical temporary directory so Windows short-name aliases do not fail file-opening assertions against their equivalent long paths.
+1. `app`: update checks report no newer version when a public repository has no published releases, instead of treating GitHub's missing latest release as an inaccessible repository. Matching or older releases also report no available update; inaccessible repositories remain explicit errors.
+2. `ci`: Claude permission tests use native absolute paths on Linux and Windows; Gemini launcher resolution handles Windows shim paths and PATH separators consistently across test hosts.
+3. `ci`: the desktop smoke uses a canonical temporary directory so Windows short-name aliases do not fail file-opening assertions against their equivalent long paths.
 
 ## 3.0.0
 

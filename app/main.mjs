@@ -20,12 +20,13 @@ import { openHarnessLogin } from "./harness-login.mjs";
 import { TaskbarActivity } from "./taskbar-activity.mjs";
 import { activeStates, replaceFile } from "../core/store.mjs";
 import { Updates } from "./updates.mjs";
+import { KitWorkbench } from "./kit-workbench.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 if (app.isPackaged) configureRuntime(path.dirname(process.execPath));
 const files = { renderer: path.join(here, "renderer"), core: path.join(here, "..", "core") };
 // Shared modules the window imports from the core, nothing else.
-const coreAssets = new Set(["/i18n.mjs", "/markdown.mjs", "/journey.mjs"]);
+const coreAssets = new Set(["/i18n.mjs", "/markdown.mjs", "/journey.mjs", "/kit-authoring.mjs"]);
 const types = { ".html": "text/html", ".mjs": "text/javascript", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".svg": "image/svg+xml", ".wav": "audio/wav" };
 
 protocol.registerSchemesAsPrivileged([{ scheme: "vibe-studio", privileges: { standard: true, secure: true, supportFetchAPI: true } }]);
@@ -42,7 +43,7 @@ if (process.platform === "win32") app.setAppUserModelId(APP_ID);
 if (!profileStartupError && !app.requestSingleInstanceLock()) app.quit();
 
 let win = null, project = null, quitting = false;
-let updates;
+let updates, workbench;
 const taskbar = new TaskbarActivity(() => win);
 let taskbarRuns = [], watchRevision = 0;
 const pending = new Map();
@@ -51,7 +52,8 @@ function syncTaskbar() {
     taskbar.setRunning(!!project && (taskbarRuns.some(run => ["running", "pausing"].includes(run.status)
         && project.sessions.has(run.sessionId) && !waiting.has(run.sessionId))
         || [...project.chats.values()].some(chat => chat.busy && !waiting.has(chat.sessionId))
-        || project.runner.status().some(service => ["waiting", "starting", "stopping"].includes(service.status))));
+        || project.runner.status().some(service => ["waiting", "starting", "stopping"].includes(service.status)))
+        || !!workbench?.drafting.status()?.busy);
 }
 const conversations = new Conversations(item => send("vibe-studio:conversation", item));
 const dataDir = () => app.getPath("userData");
@@ -184,6 +186,12 @@ function permissionText(request) {
 }
 const ui = {
         permission: async ({ sessionId, request }) => {
+            const draft = workbench?.drafting.status();
+            if (draft?.sessionId === sessionId) {
+                // Drafting only reads the kit; changes are proposals reviewed by the author.
+                if (request.kind === "read" && inside(draft.directory, request.resolvedPath || request.path)) return "approve";
+                return { reject: "Kit drafting only reads this kit. Submit changes with vibe_studio_propose." };
+            }
             const forced = project?.takeForcedAsk(sessionId) || false;
             // Like Copilot CLI, reading inside the project folder needs no question; anything else waits for the user.
             if (!forced && request.kind === "read" && !request.managedApprovalRequired && project && inside(project.project, request.resolvedPath || request.path)) return "approve";
@@ -212,7 +220,8 @@ const harnessName = () => HARNESSES.find(item => item.id === harness.status().ha
 // Changing harness closes the current one; it waits until no step and no conversation runs.
 async function useHarness(id) {
     if (harness.status().harness === id) return;
-    if (project && (project.sessions.size || project.chats.size)) throw new UserError("harness.busy");
+    if (workbench?.drafting.status()?.busy || project && (project.sessions.size || project.chats.size)) throw new UserError("harness.busy");
+    await workbench?.drafting.close();
     const next = await createHarness(id, { ui, cacheDir: path.join(dataDir(), "model-catalogs") });
     await harness.stop().catch(() => {});
     harness = next;
@@ -233,7 +242,9 @@ async function openProject(dir) {
     try {
         if (project) {
             const { runs } = await project.store.read();
-            if (runs.some(run => activeStates.has(run.status) && project.sessions.has(run.sessionId))) throw new UserError("project.busy");
+            if (runs.some(run => activeStates.has(run.status) && project.sessions.has(run.sessionId))
+                || [...project.chats.values()].some(chat => chat.busy) || project.runner.busy()
+                || project.runner.status().some(service => ["starting", "running", "stopping"].includes(service.status))) throw new UserError("project.busy");
             await project.dispose();
         }
         project = await new Project(dir, { harness, dataDir: dataDir(), sessionMode: () => (preferences.autopilot ? "autopilot" : null),
@@ -246,6 +257,7 @@ async function openProject(dir) {
         lastStatus.clear(); taskbarRuns = []; await watchRuns(true);
         const snapshot = await project.snapshot();
         await remember(project.project, typeof snapshot.kit?.title === "string" ? snapshot.kit.title : null);
+        if (workbench) { workbench.lastCheck = 0; void workbench.checkUpdates(); }
         return { project: project.project };
     } finally { done(); }
 }
@@ -255,7 +267,15 @@ function pick(list) {
     return attachments.pick(list);
 }
 const routes = {
-    "/projects": async () => ({ recent: await recent(), current: project?.project || null, harness: harness.status(), harnessName: harnessName(), version: app.getVersion(), updates: updates?.status() }),
+    "/projects": async () => ({ recent: await recent(), current: project?.project || null, language: language(), harness: harness.status(), harnessName: harnessName(), version: app.getVersion(), updates: updates?.status(), kitUpdate: workbench?.updateState }),
+    "/projects/close": async () => {
+        const runs = project ? (await project.store.read()).runs : [];
+        if (project && (runs.some(run => activeStates.has(run.status) && project.sessions.has(run.sessionId)) || [...project.chats.values()].some(chat => chat.busy) || project.runner.busy()
+            || project.runner.status().some(service => ["waiting", "starting", "running", "stopping"].includes(service.status)))) throw new UserError("project.busy");
+        await project?.dispose();
+        project = null; taskbarRuns = []; lastStatus.clear(); syncTaskbar();
+        return { closed: true };
+    },
     "/projects/choose": async () => {
         const result = await dialog.showOpenDialog(win, { properties: ["openDirectory"], title: t(language(), "projects.choose") });
         if (result.canceled || !result.filePaths[0]) return { project: project?.project || null };
@@ -299,11 +319,11 @@ const routes = {
     "/chat/start": input => need().chat(input),
     "/chat/close": input => need().closeChat(input.sessionId),
     "/harness/login": async input => {
-        if (project && (project.sessions.size || project.chats.size)) throw new UserError("harness.busy");
+        if (workbench?.drafting.status()?.busy || project && (project.sessions.size || project.chats.size)) throw new UserError("harness.busy");
         return openHarnessLogin(input.id, { locate: located });
     },
     "/harnesses": async input => {
-        if (input?.refresh && !(project?.sessions.size || project?.chats.size)) await harness.stop();
+        if (input?.refresh && !(project?.sessions.size || project?.chats.size || workbench?.drafting.status()?.busy)) await harness.stop();
         let login = null, error = null;
         try { login = (await harness.start()).login || null; } catch (failure) { error = localize(failure, language()) ?? String(failure?.message || failure); }
         const list = await availableHarnesses();
@@ -398,12 +418,19 @@ ipcMain.handle("vibe-studio:call", async (event, route, input = {}) => {
     const handler = routes[route];
     if (!handler) return { error: t(language(), "action.unknown") };
     const done = taskbar.begin(route);
-    try { return { result: await handler(input && typeof input === "object" ? input : {}) }; }
+    try {
+        if (workbench?.locked && ["/launch", "/chat/start", "/say", "/resume", "/app/start", "/projects/open", "/projects/choose", "/projects/close"].includes(route))
+            throw new UserError("author.busy");
+        return { result: await handler(input && typeof input === "object" ? input : {}) };
+    }
     catch (error) {
-        const known = localize(error, language());
-        if (!known) console.error(`[vibe_studio] ${route}:`, error);
+        const authored = typeof error?.key === "string" && error.key.startsWith("authoring.") && t(language(), error.key, error.vars || {}) !== error.key
+            ? t(language(), error.key, error.vars || {}) : null;
+        const known = localize(error, language()) ?? authored;
+        if (!known && !Array.isArray(error?.errors)) console.error(`[vibe_studio] ${route}:`, error);
         // An unexpected error keeps its detail, so that it can be reported and fixed.
-        return { error: known ?? `${t(language(), "error.action")} ${String(error?.message || error).slice(0, 400)}`, code: error.key || null };
+        return { error: known ?? `${t(language(), "error.action")} ${String(error?.message || error).slice(0, 400)}`, code: error.key || null,
+            ...(Array.isArray(error?.errors) && error.errors.length ? { issues: error.errors.slice(0, 50) } : {}) };
     } finally { done(); }
 });
 
@@ -422,8 +449,8 @@ function createWindow() {
     win.webContents.on("will-navigate", event => event.preventDefault());
     win.webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
     win.on("close", event => {
-        if (quitting || !project) return;
-        const running = [...project.sessions.keys()].length > 0 || project.runner.busy();
+        if (quitting) return;
+        const running = !!workbench?.drafting.status()?.busy || (project && ([...project.sessions.keys()].length > 0 || project.runner.busy()));
         if (!running) return;
         const choice = dialog.showMessageBoxSync(win, { type: "warning", buttons: [t(language(), "quit.confirm"), t(language(), "launch.cancel")],
             defaultId: 1, cancelId: 1, message: t(language(), "quit.title"), detail: t(language(), "quit.detail") });
@@ -440,6 +467,25 @@ app.whenReady().then(async () => {
     }
     await loadPreferences();
     const manifest = JSON.parse(await readFile(path.join(here, "..", "package.json"), "utf8"));
+    workbench = new KitWorkbench({ directory: dataDir(), repository: manifest.vibeStudio?.kits?.repository, version: app.getVersion(),
+        translate: (key, vars) => t(language(), key, vars), translateIn: (lang, key, vars) => t(lang, key, vars),
+        harnessName, documents: app.getPath("documents"), pick: list => attachments.pick(list), reveal: dir => shell.openPath(dir),
+        fetch: (url, options) => net.fetch(url, options), dialog, window: () => win, harness: () => harness,
+        project: () => project, openProject, onEvent: (sessionId, event) => conversations.event(sessionId, event),
+        onChange: () => { syncTaskbar(); send("vibe-studio:workshop", {}); send("vibe-studio:refresh", {}); },
+        cancelRequests: sessionId => {
+            for (const [id, request] of pending) {
+                if (request.sessionId !== sessionId) continue;
+                pending.delete(id);
+                const answer = { feedback: t(language(), "convo.pauseCancelled"), answer: t(language(), "convo.pauseCancelled") };
+                conversations.answered(sessionId, id, answer); request.resolve(answer);
+            }
+            syncTaskbar();
+        } });
+    workbench.items = sessionId => conversations.items(sessionId);
+    workbench.metrics = sessionId => conversations.metrics(sessionId);
+    Object.assign(routes, workbench.routes());
+    setInterval(() => { void workbench.checkUpdates(); void workbench.applyPendingPatch(); }, 60_000).unref();
     updates = new Updates({ source: manifest.vibeStudio?.updates, version: app.getVersion(),
         directory: path.join(dataDir(), "updates"), fetch: (url, options) => net.fetch(url, options),
         installed: app.isPackaged && process.platform === "win32" && process.arch === "x64"
@@ -472,6 +518,7 @@ app.on("window-all-closed", async () => {
     for (const waiting of pending.values()) waiting.resolve({ feedback: "Vibe Studio was closed." });
     pending.clear();
     await project?.dispose().catch(() => {});
+    await workbench?.drafting.close().catch(error => console.error("[vibe_studio] drafting close:", error));
     await harness.stop().catch(() => {});
     await attachments.cleanup().catch(error => console.error("[vibe_studio] attachment cleanup:", error));
     app.quit();

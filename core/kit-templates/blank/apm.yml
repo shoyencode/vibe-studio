@@ -1,0 +1,7 @@
+name: my-kit
+version: 0.1.0
+description: A new Vibe Studio kit.
+license: MIT
+dependencies:
+  apm: []
+  mcp: []

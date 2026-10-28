@@ -15,6 +15,8 @@ async function fixture(t, { installed = true } = {}) {
     const server = createServer((request, response) => {
         state.calls.push(request.url);
         if (state.fail) { response.writeHead(404).end(); return; }
+        if (state.empty && request.url.endsWith("/releases/latest")) { response.writeHead(404).end(); return; }
+        if (state.empty && request.url.startsWith("/repos/fixture/app/releases?")) { response.writeHead(200).end("[]"); return; }
         if (state.rateLimit) { response.writeHead(403, { "x-ratelimit-remaining": "0" }).end(); return; }
         if (state.redirect) { response.writeHead(302, { Location: "https://untrusted.invalid/payload" }).end(); return; }
         const url = new URL(request.url, "http://localhost");
@@ -42,6 +44,31 @@ async function fixture(t, { installed = true } = {}) {
 test("stable update versions compare numerically and never select prereleases or downgrades", () => {
     assert.equal(newerVersion("v2.10.0", "2.9.9"), true);
     for (const value of ["v2.1.1", "1.99.0", "2.2.0-beta.1", "garbage", "02.3.0"]) assert.equal(newerVersion(value, "2.1.1"), false);
+});
+
+test("the installed release and older releases report no newer update", async t => {
+    const f = await fixture(t);
+    for (const version of ["v2.1.1", "v2.0.0"]) {
+        f.state.version = version;
+        const result = await f.updates.check(true);
+        assert.equal(result.status, "current");
+        assert.equal(result.error, undefined);
+    }
+});
+
+test("an empty public release list is current, but an inaccessible repository remains an error", async t => {
+    const f = await fixture(t);
+    f.state.empty = true;
+    const result = await f.updates.check(true);
+    assert.equal(result.status, "current");
+    assert.equal(result.error, undefined);
+    assert.ok(f.state.calls.includes("/repos/fixture/app/releases?per_page=1"));
+    const cached = new Updates(f.options);
+    const count = f.state.calls.length;
+    assert.equal((await cached.check()).status, "current");
+    assert.equal(f.state.calls.length, count);
+    f.state.fail = true;
+    assert.match((await f.updates.check(true)).error, /404.*Public access/);
 });
 
 test("public GitHub release checks coalesce, survive restart and retry private-repository failures explicitly", async t => {

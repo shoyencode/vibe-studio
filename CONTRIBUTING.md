@@ -52,6 +52,7 @@ Run the smallest checks covering the change. Before a release or a change affect
 npm test
 npm run test:bridge
 npm run test:smoke
+npm run test:workshop
 npm run package
 npm run test:portable
 ```
@@ -63,6 +64,12 @@ For wizard changes, run the opt-in `npm run test:installer:ui` on an interactive
 The packaging and portable commands above target the current platform; the Windows distribution must be checked on Windows. Close running portable processes before packaging or replacing their folder. The packaging script refuses to overwrite an executable in use.
 
 Smoke checks use fake harnesses and temporary profiles: never point them at a real user profile. Kit checks use the bundled reference fixtures, not another repository. Documentation-only changes need no application test run unless they change an executable example.
+
+The workshop smoke covers mission-based creation, the read-only AI guard, proposal review (accept, edit,
+reject), translation review, kit page edits, Expert mode and the raw contract check, ZIP sharing and test
+installation in isolated folders, including narrow/dark rendering. AI proposals go through the real tool
+handler of a fake harness. It never publishes a kit or spends AI
+credits. `catalog-template/` is a separately deployed repository scaffold, not application runtime data.
 
 Changes to model policies, catalog caching or context controls must cover first use without a cache,
 account isolation, explicit selection validation and actual session settings with fake harnesses. Unit catalog

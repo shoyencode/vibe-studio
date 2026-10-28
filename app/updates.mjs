@@ -45,7 +45,8 @@ export class Updates {
             if (!response.ok) {
                 await response.body?.cancel();
                 if (response.headers.get("x-ratelimit-remaining") === "0") throw new Error("GitHub API rate limit reached. Try again later.");
-                throw new Error(`GitHub HTTP ${response.status}. Public access to the repository and release assets is required.`);
+                throw Object.assign(new Error(`GitHub HTTP ${response.status}. Public access to the repository and release assets is required.`),
+                    { status: response.status });
             }
             return response;
         }
@@ -88,14 +89,27 @@ export class Updates {
         if (!force && Date.now() - Date.parse(this.state.checkedAt) < day) return this.status();
         const checkedAt = new Date().toISOString();
         try {
-            const release = await this.json(`${this.api}/releases/latest`);
-            if (!/^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(release.tag_name) || release.draft || release.prerelease)
-                throw new Error("No stable release metadata.");
-            const releaseUrl = `https://github.com/${this.source.repository}/releases/tag/${encodeURIComponent(release.tag_name)}`;
-            this.release = release;
-            this.state = { status: newerVersion(release.tag_name, this.version) ? "available" : "current",
-                version: release.tag_name.replace(/^v/, ""), releaseUrl, checkedAt, installed: this.installed };
-            if (this.state.status === "available" && this.downloaded?.version === this.state.version) this.state.status = "ready";
+            let release;
+            try { release = await this.json(`${this.api}/releases/latest`); }
+            catch (error) {
+                if (error.status !== 404) throw error;
+                const releases = await this.json(`${this.api}/releases?per_page=1`);
+                if (!Array.isArray(releases) || releases.length !== 0) throw error;
+                // GitHub returns 404 for latest when a public repository has no published releases.
+                release = null;
+            }
+            if (!release) {
+                this.release = null;
+                this.state = { status: "current", checkedAt, installed: this.installed };
+            } else {
+                if (!/^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(release.tag_name) || release.draft || release.prerelease)
+                    throw new Error("No stable release metadata.");
+                const releaseUrl = `https://github.com/${this.source.repository}/releases/tag/${encodeURIComponent(release.tag_name)}`;
+                this.release = release;
+                this.state = { status: newerVersion(release.tag_name, this.version) ? "available" : "current",
+                    version: release.tag_name.replace(/^v/, ""), releaseUrl, checkedAt, installed: this.installed };
+                if (this.state.status === "available" && this.downloaded?.version === this.state.version) this.state.status = "ready";
+            }
         } catch (error) {
             this.state = { status: "error", checkedAt, installed: this.installed, error: String(error.message).slice(0, 400) };
         }

@@ -30,6 +30,8 @@ Vibe Studio is a contract-driven cockpit, not a chat client. The kit's `vibe-stu
 
 - Windows workstation with a local project folder where APM installed a kit. The user signs in to the harness separately (`gh auth login`, `claude auth login`, `codex login`, `gemini`).
 - Main areas: Projects, Journey, Conversation, Deliverables, Client Sources, Themes, Settings, About, plus spaces declared by the kit (units/scenarios, application, costs).
+- The Home sidebar has Projects, Kit workshop and Official kits. The project button returns home without closing the project; Close project explicitly disconnects idle conversations.
+- Kit authors are often consultants, not developers: they describe a mission, review AI proposals one at a time, edit steps on plain pages and validate AI translations side by side. Expert mode exposes the technical contract. Kits are tested in a project and shared as ZIP or from Git. An optional public GitHub catalog requires manual maintainer review; compatible patch updates apply only when idle, with backups.
 - Conversation sessions can run for a long time. The AI asks questions and permissions. Tones and Windows notifications bring the user back when the window is not in front.
 - The user reads a lot: conversation replies and Markdown deliverables shown at full content width. Client documents are converted, and the original stays openable.
 - Preferences live in `%APPDATA%\Vibe Studio`, never in the project. Data stays local.

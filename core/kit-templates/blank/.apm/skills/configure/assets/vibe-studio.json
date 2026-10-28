@@ -1,0 +1,34 @@
+{
+  "protocolVersion": 2,
+  "kit": {
+    "id": "my-kit",
+    "name": "My kit",
+    "description": "A new Vibe Studio kit.",
+    "entrySkill": "configure"
+  },
+  "config": {
+    "file": "project.yml",
+    "schema": "assets/project.schema.json",
+    "template": "assets/project-template.yml",
+    "language": "/project/language",
+    "title": "/project/name",
+    "paths": "/paths",
+    "placeholders": {
+      "root": { "pointer": "/paths/root", "default": "work" }
+    }
+  },
+  "steps": [
+    {
+      "id": "0-configure",
+      "title": "Configure the project",
+      "skill": "configure",
+      "agent": null,
+      "scope": "project",
+      "configures": true,
+      "requires": [],
+      "outputs": ["project.yml"],
+      "summary": "Set up the project configuration.",
+      "returns": "A valid project.yml."
+    }
+  ]
+}

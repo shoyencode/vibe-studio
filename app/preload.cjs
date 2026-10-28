@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
-const channels = new Set(["vibe-studio:refresh", "vibe-studio:conversation", "vibe-studio:request", "vibe-studio:alert", "vibe-studio:goto", "vibe-studio:costs"]);
+const channels = new Set(["vibe-studio:refresh", "vibe-studio:conversation", "vibe-studio:request", "vibe-studio:alert", "vibe-studio:goto", "vibe-studio:costs", "vibe-studio:workshop"]);
 
 contextBridge.exposeInMainWorld("vibeStudio", {
     call: (route, input) => ipcRenderer.invoke("vibe-studio:call", route, input),

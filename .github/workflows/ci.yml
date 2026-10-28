@@ -68,6 +68,8 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Desktop smoke
         run: npm run test:smoke
+      - name: Kit workshop smoke
+        run: npm run test:workshop
       - name: Prepare installer compiler
         run: npm run installer:tools
       - name: Build Windows installer and portable
@@ -76,6 +78,10 @@ jobs:
         run: |
           $env:VIBE_STUDIO_SMOKE_APP = (Resolve-Path 'dist\Vibe Studio-win32-x64\resources\app').Path
           npm run test:smoke
+      - name: Bundled kit workshop smoke
+        run: |
+          $env:VIBE_STUDIO_SMOKE_APP = (Resolve-Path 'dist\Vibe Studio-win32-x64\resources\app').Path
+          npm run test:workshop
       - name: Real portable executable smoke
         run: npm run test:portable
       - name: Installer preservation smoke
@@ -117,3 +123,4 @@ jobs:
             --title "Vibe Studio ${RELEASE_TAG#v}" \
             --generate-notes \
             release-assets/*.exe release-assets/*.zip
+

@@ -1,0 +1,235 @@
+{
+  "protocolVersion": 2,
+  "kit": {
+    "id": "kit-demo",
+    "name": "Demo kit",
+    "description": "Fictional kit: a scoping note, then one exploration per topic.",
+    "about": "A fictional three-step kit that shows how the Vibe Studio drives any kit: a scoping note, then topics explored one by one with a task list and an approval.",
+    "entrySkill": "demo-0-start",
+    "i18n": {
+      "fr": {
+        "name": "Kit de démonstration",
+        "description": "Kit fictif : une note de cadrage, puis une exploration par thème.",
+        "about": "Un kit fictif en trois étapes qui montre comment l’Vibe Studio pilote n’importe quel kit : une note de cadrage, puis des thèmes explorés un par un avec une liste de tâches et une validation."
+      }
+    }
+  },
+  "config": {
+    "file": "demo.yml",
+    "schema": "assets/demo.schema.json",
+    "template": "assets/demo-template.yml",
+    "language": "/project/language",
+    "title": "/project/name",
+    "paths": "/paths",
+    "placeholders": {
+      "root": {
+        "pointer": "/paths/root",
+        "default": "work"
+      }
+    }
+  },
+  "units": {
+    "id": "topic",
+    "label": "Topic",
+    "plural": "Topics",
+    "folder": "{root}/topics/topic-{n}",
+    "evidence": "{unit}/evidence",
+    "i18n": {
+      "fr": {
+        "label": "Thème",
+        "plural": "Thèmes"
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "0-configure",
+      "title": "Configure the project",
+      "skill": "demo-0-start",
+      "agent": null,
+      "scope": "project",
+      "configures": true,
+      "requires": [],
+      "outputs": [
+        "demo.yml"
+      ],
+      "summary": "Creates or checks demo.yml.",
+      "returns": "A valid demo.yml.",
+      "i18n": {
+        "fr": {
+          "title": "Configurer le projet",
+          "summary": "Crée ou vérifie demo.yml.",
+          "returns": "demo.yml valide."
+        }
+      }
+    },
+    {
+      "id": "1-write-note",
+      "title": "Write the scoping note",
+      "skill": "demo-1-write-note",
+      "agent": "demo-writer",
+      "scope": "project",
+      "requires": [
+        "demo.yml"
+      ],
+      "outputs": [
+        "{root}/note.md"
+      ],
+      "approves": [
+        "{root}/note.md"
+      ],
+      "summary": "Writes a one-page scoping note with three to five topics, then has it approved.",
+      "returns": "note.md, approved by the user.",
+      "i18n": {
+        "fr": {
+          "title": "Rédiger la note de cadrage",
+          "summary": "Rédige une note de cadrage d’une page avec trois à cinq thèmes, puis la fait valider.",
+          "returns": "note.md, validée par l’utilisateur."
+        }
+      }
+    },
+    {
+      "id": "2-explore-topic",
+      "title": "Explore a topic",
+      "skill": "demo-2-explore-topic",
+      "agent": "demo-writer",
+      "scope": "unit",
+      "requires": [
+        "{root}/note.md"
+      ],
+      "outputs": [
+        "{unit}/tasks.md",
+        "{unit}/findings.md"
+      ],
+      "approves": [
+        "{unit}/findings.md"
+      ],
+      "summary": "Splits one topic of the note into tasks, works through them one at a time and writes the findings.",
+      "returns": "tasks.md with each task status, findings.md approved by the user.",
+      "i18n": {
+        "fr": {
+          "title": "Explorer un thème",
+          "summary": "Découpe un thème de la note en tâches, les traite une par une et rédige les constats.",
+          "returns": "tasks.md avec le statut de chaque tâche, findings.md validé par l’utilisateur."
+        }
+      },
+      "guards": {
+        "requireTaskInProgress": {
+          "id": "G12",
+          "paths": [
+            "{unit}/findings.md"
+          ],
+          "reason": "Vibe Studio guard G12: mark a task in progress with vibe_studio_report before writing the findings.",
+          "description": "Findings are written only for a task in progress.",
+          "i18n": {
+            "fr": {
+              "description": "Les constats ne s’écrivent que pour une tâche en cours."
+            }
+          }
+        },
+        "singleTaskInProgress": {
+          "id": "G13",
+          "reason": "Vibe Studio guard G13: one task in progress at a time.",
+          "description": "One task in progress at a time.",
+          "i18n": {
+            "fr": {
+              "description": "Une seule tâche en cours à la fois."
+            }
+          }
+        },
+        "end": [
+          {
+            "id": "E1",
+            "check": "reported",
+            "reason": "Before ending, call vibe_studio_report with status produced.",
+            "description": "Final report sent.",
+            "i18n": {
+              "fr": {
+                "description": "Rapport final envoyé."
+              }
+            }
+          },
+          {
+            "id": "E2",
+            "check": "noTaskInProgress",
+            "path": "{unit}/tasks.md",
+            "reason": "Before ending, no task may stay in progress.",
+            "description": "No task left in progress.",
+            "i18n": {
+              "fr": {
+                "description": "Aucune tâche laissée en cours."
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "deliverables": {
+    "groups": [
+      {
+        "id": "framing",
+        "title": "Framing",
+        "patterns": [
+          "demo.yml",
+          "{root}/note.md"
+        ],
+        "i18n": {
+          "fr": {
+            "title": "Cadrage"
+          }
+        }
+      },
+      {
+        "id": "topics",
+        "title": "Topics",
+        "patterns": [
+          "{root}/topics/**"
+        ],
+        "i18n": {
+          "fr": {
+            "title": "Thèmes"
+          }
+        }
+      }
+    ]
+  },
+  "modules": {
+    "tasks": {
+      "file": "{unit}/tasks.md",
+      "buildStep": "2-explore-topic"
+    },
+    "approvals": {
+      "script": "demo-0-start/scripts/validations.py",
+      "file": "{root}/approvals.md"
+    }
+  },
+  "guards": {
+    "scriptOnly": {
+      "id": "G02",
+      "paths": [
+        "{root}/approvals.md"
+      ],
+      "scripts": [
+        "validations.py"
+      ],
+      "reason": "Vibe Studio guard G02: approvals are written only by validations.py after the user approved.",
+      "description": "Approvals are written only by the approval script.",
+      "i18n": {
+        "fr": {
+          "description": "Les validations ne sont écrites que par le script de validation."
+        }
+      }
+    },
+    "secrets": {
+      "id": "G04",
+      "reason": "Vibe Studio guard G04: never write secrets in the project.",
+      "description": "No secret written in the project.",
+      "i18n": {
+        "fr": {
+          "description": "Aucun secret écrit dans le projet."
+        }
+      }
+    }
+  }
+}
