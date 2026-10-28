@@ -1,5 +1,7 @@
 # Vibe Studio
 
+**Website and documentation: [shoyencode.github.io/vibe-studio](https://shoyencode.github.io/vibe-studio/)** (English and French).
+
 Vibe Studio is a standalone Electron desktop application that drives AI kits on top of a harness. A kit (skills, agents, rules) describes its journey in a contract, `vibe-studio.json`; Vibe Studio reads it, launches each step in a new session of the harness, follows the tasks, shows the deliverables and their approvals, the costs and the application built. Choose Copilot CLI, Claude Code, Codex CLI or Gemini CLI in Settings.
 
 | Folder | Content |

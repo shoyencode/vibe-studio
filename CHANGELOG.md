@@ -12,6 +12,7 @@ Versions follow Semantic Versioning. Application versions are independent of kit
 4. `app`: kits can be tested in a project, shared as ZIP archives or imported from Git repositories. Managed installations track their files without replacing project configuration or deliverables.
 5. `app`: a configurable official GitHub catalog distributes checksum-verified kits after manual review. Authors explicitly submit pull requests; patch updates apply automatically when idle, while minor, major and locally modified updates require confirmation and retain a backup.
 6. `contributing`: a standalone catalog repository template provides contract and package validation, a manual-review checklist and release/index publication automation.
+7. `docs`: a bilingual English/French website on GitHub Pages presents Vibe Studio with live GitHub indicators and a direct installer download, and documents installation, daily use, harnesses, troubleshooting, kit creation with an illustrated tutorial, the contract, the catalog and contributing. A Versions page lists every release with its notes and downloads. The site is published automatically with each release.
 
 ### Changed
 

@@ -115,7 +115,7 @@ Scripts are relative to the skills folder of the project. They write JSON on sta
 
 Vibe Studio imposes the guards by hooks of the harness in the sessions it creates, instead of asking the AI to follow them. A blocked action is refused before it runs and the AI receives the `reason`. A guard never approves anything: the permissions of the user stay in force. Reads are never blocked.
 
-Each entry has an `id` (`G` and two digits, `E` and a number for end checks), a `reason` sent to the AI (start it with "Vibe Studio guard <id>:" and say what to do instead), an optional `description` shown to the user, and `i18n`. Paths are patterns with placeholders, relative to the project.
+Each entry has an `id` (`G` and two digits, `E` and a number for end checks), a `reason` sent to the AI (start it with `Vibe Studio guard <id>:` and say what to do instead), an optional `description` shown to the user, and `i18n`. Paths are patterns with placeholders, relative to the project.
 
 | Kind | Fields | Effect |
 | --- | --- | --- |

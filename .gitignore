@@ -12,3 +12,7 @@ __pycache__/
 /.test-*/
 /.profile-test-*/
 /npm-debug.log*
+
+# Website build output and cache.
+/site/.vitepress/cache/
+/site/.vitepress/dist/

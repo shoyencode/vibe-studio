@@ -33,7 +33,7 @@ const [folder] = await packager({
     ignore: [/^\/test(\/|$)/, /^\/dist(\/|$)/, /^\/scripts(\/|$)/, /^\/catalog-template(\/|$)/, /^\/README\.md$/,
         /^\/(?:\.test-|\.profile-test-)[^/]+(\/|$)/,
         /^\/npm-debug\.log[^/]*$/,
-        /^\/(?:docs|\.github|\.impeccable|\.venv|__pycache__)(\/|$)/, /^\/(?:\.gitignore|requirements\.txt|CHANGELOG\.md)$/,
+        /^\/(?:docs|site|\.github|\.impeccable|\.venv|__pycache__)(\/|$)/, /^\/(?:\.gitignore|requirements\.txt|CHANGELOG\.md)$/,
         /(^|\/)__pycache__(\/|$)/, /\.pyc$/, /^\/\.env(?:\.|$)/,
         /^\/node_modules\/@anthropic-ai\/claude-agent-sdk-[^/]+(\/|$)/],
 });
